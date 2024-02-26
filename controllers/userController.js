@@ -1,11 +1,11 @@
-const User = require('../models/userModel'); 
+const User = require('../models/userModel');
 const NewMission = require('../models/newMissionModel');
 const Preregister = require('../models/preRegistrationModel');
 const jwt = require('jsonwebtoken');
 const serviceJWT = require('../configuration/JWTConfig');
 const bcrypt = require('bcrypt');
-const {decode} = require("jsonwebtoken");
-const {findMissionById} = require("../utils/utils")
+const { decode } = require("jsonwebtoken");
+const { findMissionById } = require("../utils/utils")
 const fs = require('fs').promises;
 const moment = require('moment');
 exports.register = async (req, res) => {
@@ -23,7 +23,7 @@ exports.register = async (req, res) => {
       password: hashedPassword,
     });
 
-    const preRegistration = new PreRegistration({userId : newUser._id});
+    const preRegistration = new PreRegistration({ userId: newUser._id });
     await preRegistration.save();
 
     newUser.preRegister = preRegistration._id;
@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
     await newUser.save();
 
 
-    const token = jwt.sign({ userId: newUser._id, role: newUser.role, preRegistration:newUser.preRegister  }, serviceJWT.jwtSecret, {
+    const token = jwt.sign({ userId: newUser._id, role: newUser.role, preRegistration: newUser.preRegister }, serviceJWT.jwtSecret, {
       expiresIn: serviceJWT.jwtExpiresIn,
     });
     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
@@ -59,15 +59,17 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const token = jwt.sign({ userId: user._id, role: user.role, preRegistration:user.preRegister }, serviceJWT.jwtSecret, {
+    const token = jwt.sign({ userId: user._id, role: user.role, preRegistration: user.preRegister }, serviceJWT.jwtSecret, {
       expiresIn: serviceJWT.jwtExpiresIn,
     });
 
-    res.status(200).json({ message: 'Login successful',
+    res.status(200).json({
+      message: 'Login successful',
       token,
       role: user.role,
       id: user._id,
-      image: user.image});
+      image: user.image
+    });
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ message: 'Login failed' });
@@ -88,14 +90,14 @@ exports.createUserByAdmin = (req, res) => {
       return res.status(403).json({ message: 'Accès non autorisé' });
     }
 
-    const { email, password, immat,firstName, lastName } = req.body;
+    const { email, password, immat, firstName, lastName } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const newUser = new User({ 
+    const newUser = new User({
       email,
       password: hashedPassword,
       role: 'RH',
-      [`personalInfo.immatriculation`]: immat ,
-      [`personalInfo.firstName`]: firstName ,
+      [`personalInfo.immatriculation`]: immat,
+      [`personalInfo.firstName`]: firstName,
       [`personalInfo.lastName`]: lastName,
     });
 
@@ -113,118 +115,6 @@ exports.getMissionsByUserId = async (req, res) => {
 
     const userId = req.params.userId;
 
-    const user = await User.findOne({_id: userId});
-
-    if (!user) {
-      return res.status(404).json({message: 'Utilisateur non trouvé'});
-    }
-
-    const userMissions = user.missions;
-
-    const newMissions = await NewMission.find({userId});
-
-    const transformedUserMissions = userMissions.map((mission) => ({
-      missionInfo: {
-        profession: mission.missionInfo.profession,
-        industrySector: mission.missionInfo.industrySector,
-        finalClient: mission.missionInfo.finalClient,
-        dailyRate: mission.missionInfo.dailyRate,
-        startDate: mission.missionInfo.startDate,
-        endDate: mission.missionInfo.endDate,
-        isSimulationValidated: mission.missionInfo.isSimulationValidated,
-      },
-      clientInfo: {
-        company: mission.clientInfo.company,
-        firstName: mission.clientInfo.clientContact.firstName,
-        lastName: mission.clientInfo.clientContact.lastName,
-        position: mission.clientInfo.clientContact.position,
-        email: mission.clientInfo.clientContact.email,
-        phoneNumber: mission.clientInfo.clientContact.phoneNumber,
-
-      },
-      _id: mission._id,
-      contractProcess: mission.contractProcess,
-      newMissionStatus: mission.newMissionStatus,
-    }));
-
-
-    const transformedNewMissions = newMissions.map((mission) => ({
-      missionInfo: {
-        profession: mission.missionInfo.profession.value,
-        industrySector: mission.missionInfo.industrySector.value,
-        finalClient: mission.missionInfo.finalClient.value,
-        dailyRate: mission.missionInfo.dailyRate.value,
-        startDate: mission.missionInfo.startDate.value,
-        endDate: mission.missionInfo.endDate.value,
-        isSimulationValidated: mission.missionInfo.isSimulationValidated.value,
-      },
-      clientInfo: {
-        company: mission.clientInfo.company,
-        firstName: mission.clientInfo.clientContact.firstName.value,
-        lastName: mission.clientInfo.clientContact.lastName.value,
-        position: mission.clientInfo.clientContact.position.value,
-        email: mission.clientInfo.clientContact.email.value,
-        phoneNumber: mission.clientInfo.clientContact.phoneNumber.value,
-      },
-      _id: mission._id,
-      userId: mission.userId,
-      contractProcess: mission.contractProcess,
-      newMissionStatus: mission.newMissionStatus,
-      __v: mission.__v,
-    }));
-
-    const allMissions = [...transformedUserMissions, ...transformedNewMissions];
-
-    res.status(200).json(allMissions);
-  }catch (error){
-    res.status(500).json(error);
-  }
-};
-
-exports.getMissionByMissionId = async (req, res) => {
-  try {
-    const missionId = req.params.newMissionId;
-    await NewMission
-        .findById(missionId)
-        .then(async (newMission) => {
-          if (!newMission) {
-            await User.find({})
-                .then(users => {
-
-                 users.forEach(user => {
-                   user.missions.forEach(mission => {
-
-                    if (mission._id == missionId){
-                      return res.status(200).send(mission)
-                    }
-                   });
-                 });
-
-
-                })
-          }else{
-            return res.status(200).send(newMission);
-          }
-
-
-        })
-        .catch((error) => {
-          return res.status(500).send({ error: error });
-        });
-
-  } catch (error) {
-    return res.status(500).json({ error: 'Une erreur s\'est produite lors de la récupération des missions.' });
-  }
-};
-
-exports.getMissionsByJWT = async (req, res) => {
-
-    const token = req.headers.authorization;
-    if (!token) {
-      return res.status(401).json({ message: 'Token non fourni' });
-    }
-    const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-    const userId = decoded.userId;
     const user = await User.findOne({ _id: userId });
 
     if (!user) {
@@ -245,7 +135,7 @@ exports.getMissionsByJWT = async (req, res) => {
         endDate: mission.missionInfo.endDate,
         isSimulationValidated: mission.missionInfo.isSimulationValidated,
       },
-      clientInfo:{
+      clientInfo: {
         company: mission.clientInfo.company,
         firstName: mission.clientInfo.clientContact.firstName,
         lastName: mission.clientInfo.clientContact.lastName,
@@ -253,7 +143,7 @@ exports.getMissionsByJWT = async (req, res) => {
         email: mission.clientInfo.clientContact.email,
         phoneNumber: mission.clientInfo.clientContact.phoneNumber,
 
-      } ,
+      },
       _id: mission._id,
       contractProcess: mission.contractProcess,
       newMissionStatus: mission.newMissionStatus,
@@ -270,7 +160,7 @@ exports.getMissionsByJWT = async (req, res) => {
         endDate: mission.missionInfo.endDate.value,
         isSimulationValidated: mission.missionInfo.isSimulationValidated.value,
       },
-      clientInfo:{
+      clientInfo: {
         company: mission.clientInfo.company,
         firstName: mission.clientInfo.clientContact.firstName.value,
         lastName: mission.clientInfo.clientContact.lastName.value,
@@ -280,6 +170,7 @@ exports.getMissionsByJWT = async (req, res) => {
       },
       _id: mission._id,
       userId: mission.userId,
+      contractProcess: mission.contractProcess,
       newMissionStatus: mission.newMissionStatus,
       __v: mission.__v,
     }));
@@ -287,6 +178,117 @@ exports.getMissionsByJWT = async (req, res) => {
     const allMissions = [...transformedUserMissions, ...transformedNewMissions];
 
     res.status(200).json(allMissions);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
+
+exports.getMissionByMissionId = async (req, res) => {
+  try {
+    const missionId = req.params.newMissionId;
+    await NewMission
+      .findById(missionId)
+      .then(async (newMission) => {
+        if (!newMission) {
+          await User.find({})
+            .then(users => {
+
+              users.forEach(user => {
+                user.missions.forEach(mission => {
+
+                  if (mission._id == missionId) {
+                    return res.status(200).send(mission)
+                  }
+                });
+              });
+
+
+            })
+        } else {
+          return res.status(200).send(newMission);
+        }
+
+
+      })
+      .catch((error) => {
+        return res.status(500).send({ error: error });
+      });
+
+  } catch (error) {
+    return res.status(500).json({ error: 'Une erreur s\'est produite lors de la récupération des missions.' });
+  }
+};
+
+exports.getMissionsByJWT = async (req, res) => {
+
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).json({ message: 'Token non fourni' });
+  }
+  const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+  const userId = decoded.userId;
+  const user = await User.findOne({ _id: userId });
+
+  if (!user) {
+    return res.status(404).json({ message: 'Utilisateur non trouvé' });
+  }
+
+  const userMissions = user.missions;
+
+  const newMissions = await NewMission.find({ userId });
+
+  const transformedUserMissions = userMissions.map((mission) => ({
+    missionInfo: {
+      profession: mission.missionInfo.profession,
+      industrySector: mission.missionInfo.industrySector,
+      finalClient: mission.missionInfo.finalClient,
+      dailyRate: mission.missionInfo.dailyRate,
+      startDate: mission.missionInfo.startDate,
+      endDate: mission.missionInfo.endDate,
+      isSimulationValidated: mission.missionInfo.isSimulationValidated,
+    },
+    clientInfo: {
+      company: mission.clientInfo.company,
+      firstName: mission.clientInfo.clientContact.firstName,
+      lastName: mission.clientInfo.clientContact.lastName,
+      position: mission.clientInfo.clientContact.position,
+      email: mission.clientInfo.clientContact.email,
+      phoneNumber: mission.clientInfo.clientContact.phoneNumber,
+
+    },
+    _id: mission._id,
+    contractProcess: mission.contractProcess,
+    newMissionStatus: mission.newMissionStatus,
+  }));
+
+
+  const transformedNewMissions = newMissions.map((mission) => ({
+    missionInfo: {
+      profession: mission.missionInfo.profession.value,
+      industrySector: mission.missionInfo.industrySector.value,
+      finalClient: mission.missionInfo.finalClient.value,
+      dailyRate: mission.missionInfo.dailyRate.value,
+      startDate: mission.missionInfo.startDate.value,
+      endDate: mission.missionInfo.endDate.value,
+      isSimulationValidated: mission.missionInfo.isSimulationValidated.value,
+    },
+    clientInfo: {
+      company: mission.clientInfo.company,
+      firstName: mission.clientInfo.clientContact.firstName.value,
+      lastName: mission.clientInfo.clientContact.lastName.value,
+      position: mission.clientInfo.clientContact.position.value,
+      email: mission.clientInfo.clientContact.email.value,
+      phoneNumber: mission.clientInfo.clientContact.phoneNumber.value,
+    },
+    _id: mission._id,
+    userId: mission.userId,
+    newMissionStatus: mission.newMissionStatus,
+    __v: mission.__v,
+  }));
+
+  const allMissions = [...transformedUserMissions, ...transformedNewMissions];
+
+  res.status(200).json(allMissions);
 
 };
 
@@ -302,7 +304,7 @@ exports.getPersonnalInfoByUserId = async (req, res) => {
     const userPersonalInfo = user.personalInfo;
 
     const hasNonEmptyProperties = Object.values(userPersonalInfo)
-        .some(value => typeof value === 'string' && value.trim() !== '');
+      .some(value => typeof value === 'string' && value.trim() !== '');
 
     if (!hasNonEmptyProperties) {
       return res.status(404).json({ error: "Personal info not validated yet" });
@@ -379,16 +381,16 @@ exports.getAllDocuments = async (req, res) => {
       createdAt: doc.createdAt
     }));
 
-   //user.missions.forEach(mission => {
-   //  if (mission.craInformation.craPDF) {
-   //    allDocuments.push({
-   //      _id: mission._id,
-   //      documentName: `CRA PDF - Mission ${mission._id}`,
-   //      document: mission.craInformation.craPDF,
-   //      createdAt: new Date()
-   //    });
-   //  }
-   //});
+    //user.missions.forEach(mission => {
+    //  if (mission.craInformation.craPDF) {
+    //    allDocuments.push({
+    //      _id: mission._id,
+    //      documentName: `CRA PDF - Mission ${mission._id}`,
+    //      document: mission.craInformation.craPDF,
+    //      createdAt: new Date()
+    //    });
+    //  }
+    //});
 
     res.status(200).json(allDocuments);
   } catch (error) {
@@ -403,27 +405,27 @@ exports.editIdentificationDocument = async (req, res) => {
   const files = req.files;
   const identificationDocumentFilename = files.identificationDocument ? files.identificationDocument[0].filename : null;
 
-  await  User.findById({_id: userId}).then(async user => {
+  await User.findById({ _id: userId }).then(async user => {
     const oldFileName = user.personalInfo.identificationDocument
     if (oldFileName) {
       try {
         const filePath = `uploads/${oldFileName}`;
         await fs.unlink(filePath);
-      }catch (e) {
+      } catch (e) {
         console.log("hello")
       }
 
     }
     user.personalInfo.identificationDocument = identificationDocumentFilename;
-   await user.save().then(userr => {
-     return res.status(200).send(user)
-   }).catch(error => {
-     return res.status(500).send({error: error})
-   })
+    await user.save().then(userr => {
+      return res.status(200).send(user)
+    }).catch(error => {
+      return res.status(500).send({ error: error })
+    })
 
 
   }).catch(error => {
-    return res.status(500).send({error: error})
+    return res.status(500).send({ error: error })
   })
 }
 
@@ -433,13 +435,13 @@ exports.editDrivingLiscence = async (req, res) => {
   const files = req.files;
   const drivingLicenseFilename = files.drivingLicense ? files.drivingLicense[0].filename : null;
 
-  await  User.findById({_id: userId}).then(async user => {
+  await User.findById({ _id: userId }).then(async user => {
     const oldFileName = user.personalInfo.carInfo.drivingLicense
     if (oldFileName) {
       try {
         const filePath = `uploads/${oldFileName}`;
         await fs.unlink(filePath);
-      }catch (e) {
+      } catch (e) {
         console.log("hello")
       }
 
@@ -448,12 +450,12 @@ exports.editDrivingLiscence = async (req, res) => {
     await user.save().then(userr => {
       return res.status(200).send(user)
     }).catch(error => {
-      return res.status(500).send({error: error})
+      return res.status(500).send({ error: error })
     })
 
 
   }).catch(error => {
-    return res.status(500).send({error: error})
+    return res.status(500).send({ error: error })
   })
 }
 
@@ -463,13 +465,13 @@ exports.editRibDocument = async (req, res) => {
   const files = req.files;
   const ribDocumentFilename = files.ribDocument ? files.ribDocument[0].filename : null;
 
-  await  User.findById({_id: userId}).then(async user => {
+  await User.findById({ _id: userId }).then(async user => {
     const oldFileName = user.personalInfo.ribDocument
     if (oldFileName) {
       try {
         const filePath = `uploads/${oldFileName}`;
         await fs.unlink(filePath);
-      }catch (e) {
+      } catch (e) {
         console.log("hello")
       }
 
@@ -478,12 +480,12 @@ exports.editRibDocument = async (req, res) => {
     await user.save().then(userr => {
       return res.status(200).send(user)
     }).catch(error => {
-      return res.status(500).send({error: error})
+      return res.status(500).send({ error: error })
     })
 
 
   }).catch(error => {
-    return res.status(500).send({error: error})
+    return res.status(500).send({ error: error })
   })
 }
 
@@ -521,7 +523,7 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
       });
     }
 
-      const categories = Array.from({ length: 12 }, (_, i) => {
+    const categories = Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;
       return `${month}/${currentYear}`;
     });
@@ -540,7 +542,7 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
 
 exports.getConsultantStats = async (req, res) => {
   try {
-    const users = await User.find({role: 'CONSULTANT'});
+    const users = await User.find({ role: 'CONSULTANT' });
 
 
     let numberOfConsultants = users.length;
@@ -582,7 +584,7 @@ exports.getConsultantStats = async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur lors du calcul des statistiques des consultants :', error);
-    return res.status(500).json({message: 'Erreur interne du serveur'});
+    return res.status(500).json({ message: 'Erreur interne du serveur' });
   }
 }
 
@@ -610,22 +612,22 @@ exports.updateCraInformations = async (req, res) => {
 
 
   try {
-    await User.updateOne({"missions._id": missionId}, {
+    await User.updateOne({ "missions._id": missionId }, {
       $set: {
         "missions.$.craInformation.selectedDates": convertedDates,
         "missions.$.craInformation.signature": signatureFilename,
         "missions.$.craInformation.noteGlobale": req.body.noteGlobale,
       }
     }).then(cra => {
-      res.status(200).json({message: 'CRA information updated successfully for all users.'});
+      res.status(200).json({ message: 'CRA information updated successfully for all users.' });
     }).catch(e => {
-      res.status(300).json({message: e});
+      res.status(300).json({ message: e });
     });
 
 
   } catch (error) {
     console.error('Error updating CRA information:', error);
-    res.status(500).json({message: 'Internal Server Error'});
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 }
 
@@ -635,8 +637,8 @@ exports.getCraInformations = async (req, res) => {
     const missionId = req.params.missionId;
 
     const user = await User.findOne(
-        { "missions._id": missionId },
-        { "missions.$": 1 } // Projection to get only the matched mission
+      { "missions._id": missionId },
+      { "missions.$": 1 } // Projection to get only the matched mission
     );
 
     if (!user || !user.missions || user.missions.length === 0) {
@@ -660,16 +662,16 @@ exports.getCraInformations = async (req, res) => {
 
 exports.getRhUsers = async (req, res) => {
   try {
-    await User.find({role: "RH"}).then(users => {
-      if(users.length === 0){
+    await User.find({ role: "RH" }).then(users => {
+      if (users.length === 0) {
         return res.status(404).send("users not found !")
 
-      }else {
+      } else {
         return res.status(200).send(users)
       }
 
     })
-  }catch (e) {
+  } catch (e) {
     return res.status(500).send("server error")
 
   }
@@ -677,16 +679,16 @@ exports.getRhUsers = async (req, res) => {
 
 exports.getConsultantUsers = async (req, res) => {
   try {
-    await User.find({role: "CONSULTANT"}).then(users => {
-      if(users.length === 0){
+    await User.find({ role: "CONSULTANT" }).then(users => {
+      if (users.length === 0) {
         return res.status(404).send("users not found !")
 
-      }else {
+      } else {
         return res.status(200).send(users)
       }
 
     })
-  }catch (e) {
+  } catch (e) {
     return res.status(500).send("server error")
 
   }
@@ -694,94 +696,97 @@ exports.getConsultantUsers = async (req, res) => {
 
 exports.updateUserByAdmin = async (req, res) => {
   try {
-       const token = req.headers.authorization;
-       if (!token) {
-         return res.status(401).json({message: 'Token non fourni'});
-       }
-      try {
-        const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-        if (decoded.role !== 'ADMIN') {
-          return res.status(403).json({message: 'Accès non autorisé'});
-        }
-      } catch (err) {
-        if (err.name === 'TokenExpiredError') {
-          return res.status(301).json({message: 'Token expiré'});
-        }
-        return res.status(500).json({message: 'Erreur lors de la vérification du token'});
+    const token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).json({ message: 'Token non fourni' });
+    }
+    try {
+      const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+      if (decoded.role !== 'ADMIN') {
+        return res.status(403).json({ message: 'Accès non autorisé' });
       }
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(301).json({ message: 'Token expiré' });
+      }
+      return res.status(500).json({ message: 'Erreur lors de la vérification du token' });
+    }
 
     const userId = req.params.userId;
     const body = req.body;
 
 
-    await User.findOneAndUpdate({_id: userId},
-        {
-          [`personalInfo.immatriculation`]: body.immatriculation,
-          [`personalInfo.firstName`]: body.firstName,
-          [`personalInfo.lastName`]: body.lastName,
-          email : body.email
-        },
-        {new: true}
+    await User.findOneAndUpdate({ _id: userId },
+      {
+        [`personalInfo.immatriculation`]: body.immatriculation,
+        [`personalInfo.firstName`]: body.firstName,
+        [`personalInfo.lastName`]: body.lastName,
+        email: body.email
+      },
+      { new: true }
     ).then(updatedUser => {
-      if(!updatedUser){
-        return res.status(404).json({message: 'Utilisateur non trouvé'});
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
       }
       return res.status(200).json(updatedUser);
     }).catch(error => {
-      res.status(500).json({message: error.message});
+      res.status(500).json({ message: error.message });
     })
 
   } catch (error) {
-    res.status(500).json({message: 'Échec de la création de l\'utilisateur'});
+    res.status(500).json({ message: 'Échec de la création de l\'utilisateur' });
   }
 };
 
 exports.updateAccountVisibility = async (req, res) => {
-   const token = req.headers.authorization;
-   if (!token) {
-     return res.status(401).json({message: 'Token non fourni'});
-   }
-   try {
-     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-     if (decoded.role !== 'ADMIN') {
-       return res.status(403).json({message: 'Accès non autorisé'});
-     }
-   } catch (err) {
-     if (err.name === 'TokenExpiredError') {
-       return res.status(301).json({message: 'Token expiré'});
-     }
-     return res.status(500).json({message: 'Erreur lors de la vérification du token'});
-   }
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).json({ message: 'Token non fourni' });
+  }
+  try {
+    const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+    if (decoded.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Accès non autorisé' });
+    }
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(301).json({ message: 'Token expiré' });
+    }
+    return res.status(500).json({ message: 'Erreur lors de la vérification du token' });
+  }
 
   const activated = req.body.activated;
   const userId = req.params.userId;
 
-  await User.findOneAndUpdate({_id: userId},
-      {isAvtivated: activated},
-      {new: true}).then(updatedUser => {
-        if(!updatedUser){
-          return res.status(404).json({message: 'Utilisateur non trouvé'});
-        }
-    return res.status(200).json(updatedUser);
-  }).catch(error => {
-    res.status(500).json({message: error.message});
-  })
+  await User.findOneAndUpdate({ _id: userId },
+    { isAvtivated: activated },
+    { new: true }).then(updatedUser => {
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      }
+      return res.status(200).json(updatedUser);
+    }).catch(error => {
+      res.status(500).json({ message: error.message });
+    })
 }
-
 exports.addPDFtoUser = async (req, res) => {
   try {
     const missionId = req.params.missionId;
     const files = req.files;
     const craPdfFilename = files.craPdf ? files.craPdf[0].filename : null;
+    const currentDate = new Date(); // Add this line to get the current date
 
     const updatedUser = await User.findOneAndUpdate(
-        { "missions._id": missionId },
-        {
-          $push: {
-            "missions.$.craInformation.craPDF": craPdfFilename,
-          },
+      { "missions._id": missionId },
+      {
+        $push: {
+          "missions.$.craInformation.craPDF": {
+            filename: craPdfFilename,
+            date: currentDate // Add the current date to the PDF object
+          }
         },
-        { new: true }
+      },
+      { new: true }
     );
 
     if (!updatedUser) {
@@ -789,7 +794,7 @@ exports.addPDFtoUser = async (req, res) => {
     }
 
     const updatedMission = updatedUser.missions.find(
-        (mission) => mission._id.toString() === missionId
+      (mission) => mission._id.toString() === missionId
     );
 
     res.status(200).json(updatedMission.craInformation.craPDF);
@@ -807,16 +812,16 @@ exports.getAllCras = async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({message: 'User not found'});
+      return res.status(404).json({ message: 'User not found' });
     }
 
     const craPdfs = user.missions.reduce((pdfs, mission) => {
       return pdfs.concat(mission.craInformation.craPDF);
     }, []);
 
-    res.status(200).json({craPdfs});
+    res.status(200).json({ craPdfs });
   } catch (error) {
     console.error('Error fetching craPDFs:', error);
-    res.status(500).json({message: 'Internal Server Error'});
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 }
