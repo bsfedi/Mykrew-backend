@@ -35,6 +35,7 @@ exports.createNewMission = async (req, res) => {
                 [`missionInfo.dailyRate.value`]: clientInfo.dailyRate,
                 [`missionInfo.startDate.value`]: clientInfo.startDate,
                 [`missionInfo.endDate.value`]: clientInfo.endDate,
+                [`missionInfo.portage.value`]: clientInfo.portage,
                 [`missionInfo.isSimulationValidated.value`]: isSimulationValidatedFilename,
                 [`newMissionStatus`]: "PENDING",
 
@@ -121,6 +122,7 @@ exports.getNewMissionById = async (req, res) => {
                             dailyRate: newMission.missionInfo.dailyRate.value,
                             startDate: newMission.missionInfo.startDate.value,
                             endDate: newMission.missionInfo.endDate.value,
+                            portage: newMission.missionInfo.portage.value,
                             isSimulationValidated: newMission.missionInfo.isSimulationValidated.value,
                         },
                         clientInfo: {
@@ -152,7 +154,7 @@ exports.getNewMissionById = async (req, res) => {
     }
 };
 
-exports.RHvalidation = async (req, res)=>{
+exports.RHvalidation = async (req, res) => {
 
 
         const token = req.headers.authorization;
@@ -207,6 +209,8 @@ exports.RHvalidation = async (req, res)=>{
                 [`missionInfo.profession.causeNonValidation`]: rhValidation.professionCause,
                 [`missionInfo.industrySector.validated`]: rhValidation.industrySectorValidated,
                 [`missionInfo.industrySector.causeNonValidation`]: rhValidation.industrySectorCause,
+                [`missionInfo.portage.validated`]: rhValidation.industrySectorValidated,
+                [`missionInfo.portage.causeNonValidation`]: rhValidation.industrySectorCause,
                 [`missionInfo.finalClient.validated`]: rhValidation.finalClientValidation,
                 [`missionInfo.finalClient.causeNonValidation`]: rhValidation.finalClientCause,
                 [`missionInfo.dailyRate.validated`]: rhValidation.dailyRateValidation,
@@ -304,6 +308,8 @@ exports.consultantEdit = async (req, res)=>{
             'missionInfo.finalClient.causeNonValidation': null,
             'missionInfo.dailyRate.validated': true,
             'missionInfo.dailyRate.causeNonValidation': null,
+            'missionInfo.portage.validated': true,
+            'missionInfo.portage.causeNonValidation': null,
             'missionInfo.startDate.validated': true,
             'missionInfo.startDate.causeNonValidation': null,
             'missionInfo.endDate.validated': true,
@@ -332,6 +338,7 @@ exports.consultantEdit = async (req, res)=>{
                 [`missionInfo.industrySector.value`]: rhValidation.industrySector,
                 [`missionInfo.finalClient.value`]: rhValidation.finalClient,
                 [`missionInfo.dailyRate.value`]: rhValidation.dailyRate,
+                [`missionInfo.portage.value`]: rhValidation.dailyRate,
                 [`missionInfo.startDate.value`]: rhValidation.startDate,
                 [`missionInfo.endDate.value`]: rhValidation.endDate,
                 [`missionInfo.isSimulationValidated.value`]: rhValidation.simulationValidation,

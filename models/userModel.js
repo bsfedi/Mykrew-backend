@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "default.jpg"
   },
+  isAvtivated: {
+    type: Boolean,
+    default: true
+  },
   email: {
     type: String,
     required: true,
@@ -38,12 +42,16 @@ const userSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       default: new mongoose.Types.ObjectId()
     },
+
     craInformation: {
       selectedDates : [{
         date: {
           type: Date,
           default: null
         }
+      }],
+      craPDF: [{
+        type: String
       }],
       signature: String,
       noteGlobale: String
@@ -85,6 +93,7 @@ const userSchema = new mongoose.Schema({
     phoneNumber: String,
     dateOfBirth: Date,
     location: String,
+    portage: String,
     nationality: String,
     socialSecurityNumber: String,
     identificationDocument: String,

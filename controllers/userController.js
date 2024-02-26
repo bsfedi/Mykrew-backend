@@ -330,13 +330,18 @@ exports.getPreregisterByUserId = async (req, res) => {
   }
 };
 
-
 exports.addDocumentToUser = async (req, res) => {
   const userId = req.params.userId;
 
   const files = req.files;
 
-  const userDocumentFilename = files.userDocument ? files.userDocument[0].filename : null;
+  const userDocumentFile = files.userDocument ? files.userDocument[0] : null;
+
+  if (!userDocumentFile) {
+    return res.status(400).json({ message: 'No userDocument file provided' });
+  }
+
+  const userDocumentFilename = userDocumentFile.filename;
   const documentName = req.body.documentName;
   const documentData = {
     documentName: documentName,
@@ -351,12 +356,12 @@ exports.addDocumentToUser = async (req, res) => {
 
     await user.addDocument(documentData);
 
-    return res.status(200).send({ message: 'Document added successfully' });
+    return res.status(200).json({ message: 'Document added successfully' });
   } catch (error) {
-    return res.status(500).send({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
-};
 
+};
 
 exports.getAllDocuments = async (req, res) => {
   const userId = req.params.userId;
@@ -367,16 +372,30 @@ exports.getAllDocuments = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const allDocuments = user.userDocuments;
+    const allDocuments = user.userDocuments.map(doc => ({
+      _id: doc._id,
+      documentName: doc.documentName,
+      document: doc.document,
+      createdAt: doc.createdAt
+    }));
 
-    // Return all documents in the response
+   //user.missions.forEach(mission => {
+   //  if (mission.craInformation.craPDF) {
+   //    allDocuments.push({
+   //      _id: mission._id,
+   //      documentName: `CRA PDF - Mission ${mission._id}`,
+   //      document: mission.craInformation.craPDF,
+   //      createdAt: new Date()
+   //    });
+   //  }
+   //});
+
     res.status(200).json(allDocuments);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
-
 
 exports.editIdentificationDocument = async (req, res) => {
   const userId = req.params.userId;
@@ -408,7 +427,6 @@ exports.editIdentificationDocument = async (req, res) => {
   })
 }
 
-
 exports.editDrivingLiscence = async (req, res) => {
   const userId = req.params.userId;
 
@@ -438,7 +456,6 @@ exports.editDrivingLiscence = async (req, res) => {
     return res.status(500).send({error: error})
   })
 }
-
 
 exports.editRibDocument = async (req, res) => {
   const userId = req.params.userId;
@@ -521,7 +538,6 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
   }
 };
 
-
 exports.getConsultantStats = async (req, res) => {
   try {
     const users = await User.find({role: 'CONSULTANT'});
@@ -572,7 +588,6 @@ exports.getConsultantStats = async (req, res) => {
 
 exports.updateCraInformations = async (req, res) => {
 
-  console.log("aa")
   const missionId = req.params.missionId
   const files = req.files;
 
@@ -613,6 +628,7 @@ exports.updateCraInformations = async (req, res) => {
     res.status(500).json({message: 'Internal Server Error'});
   }
 }
+
 
 exports.getCraInformations = async (req, res) => {
   try {
@@ -673,5 +689,134 @@ exports.getConsultantUsers = async (req, res) => {
   }catch (e) {
     return res.status(500).send("server error")
 
+  }
+}
+
+exports.updateUserByAdmin = async (req, res) => {
+  try {
+       const token = req.headers.authorization;
+       if (!token) {
+         return res.status(401).json({message: 'Token non fourni'});
+       }
+      try {
+        const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+        if (decoded.role !== 'ADMIN') {
+          return res.status(403).json({message: 'Accès non autorisé'});
+        }
+      } catch (err) {
+        if (err.name === 'TokenExpiredError') {
+          return res.status(301).json({message: 'Token expiré'});
+        }
+        return res.status(500).json({message: 'Erreur lors de la vérification du token'});
+      }
+
+    const userId = req.params.userId;
+    const body = req.body;
+
+
+    await User.findOneAndUpdate({_id: userId},
+        {
+          [`personalInfo.immatriculation`]: body.immatriculation,
+          [`personalInfo.firstName`]: body.firstName,
+          [`personalInfo.lastName`]: body.lastName,
+          email : body.email
+        },
+        {new: true}
+    ).then(updatedUser => {
+      if(!updatedUser){
+        return res.status(404).json({message: 'Utilisateur non trouvé'});
+      }
+      return res.status(200).json(updatedUser);
+    }).catch(error => {
+      res.status(500).json({message: error.message});
+    })
+
+  } catch (error) {
+    res.status(500).json({message: 'Échec de la création de l\'utilisateur'});
+  }
+};
+
+exports.updateAccountVisibility = async (req, res) => {
+   const token = req.headers.authorization;
+   if (!token) {
+     return res.status(401).json({message: 'Token non fourni'});
+   }
+   try {
+     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+     if (decoded.role !== 'ADMIN') {
+       return res.status(403).json({message: 'Accès non autorisé'});
+     }
+   } catch (err) {
+     if (err.name === 'TokenExpiredError') {
+       return res.status(301).json({message: 'Token expiré'});
+     }
+     return res.status(500).json({message: 'Erreur lors de la vérification du token'});
+   }
+
+  const activated = req.body.activated;
+  const userId = req.params.userId;
+
+  await User.findOneAndUpdate({_id: userId},
+      {isAvtivated: activated},
+      {new: true}).then(updatedUser => {
+        if(!updatedUser){
+          return res.status(404).json({message: 'Utilisateur non trouvé'});
+        }
+    return res.status(200).json(updatedUser);
+  }).catch(error => {
+    res.status(500).json({message: error.message});
+  })
+}
+
+exports.addPDFtoUser = async (req, res) => {
+  try {
+    const missionId = req.params.missionId;
+    const files = req.files;
+    const craPdfFilename = files.craPdf ? files.craPdf[0].filename : null;
+
+    const updatedUser = await User.findOneAndUpdate(
+        { "missions._id": missionId },
+        {
+          $push: {
+            "missions.$.craInformation.craPDF": craPdfFilename,
+          },
+        },
+        { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'Mission not found' });
+    }
+
+    const updatedMission = updatedUser.missions.find(
+        (mission) => mission._id.toString() === missionId
+    );
+
+    res.status(200).json(updatedMission.craInformation.craPDF);
+  } catch (error) {
+    console.error('Error updating CRA information:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+exports.getAllCras = async (req, res) => {
+
+  const userId = req.params.userId;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({message: 'User not found'});
+    }
+
+    const craPdfs = user.missions.reduce((pdfs, mission) => {
+      return pdfs.concat(mission.craInformation.craPDF);
+    }, []);
+
+    res.status(200).json({craPdfs});
+  } catch (error) {
+    console.error('Error fetching craPDFs:', error);
+    res.status(500).json({message: 'Internal Server Error'});
   }
 }

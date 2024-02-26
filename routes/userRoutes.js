@@ -20,7 +20,11 @@ const { register,
         updateCraInformations,
         getCraInformations,
         getConsultantUsers,
-        getRhUsers} = require('../controllers/userController');
+        getRhUsers,
+        updateUserByAdmin,
+        updateAccountVisibility,
+        addPDFtoUser,
+        getAllCras} = require('../controllers/userController');
 
 
 router.post('/register/', register);
@@ -37,12 +41,15 @@ router.get('/getrhUsers', getRhUsers);
 router.get('/getConsultantusers', getConsultantUsers);
 
 router.get('/getPreregisterByUserId/:userId', getPreregisterByUserId);
+
+router.get('/getAllcras/:userId', getAllCras);
+
 router.get('/getAllDacuments/:userId', getAllDocuments);
 router.put('/addDocumentToUser/:userId',upload.fields([
         { name: 'userDocument', maxCount: 1 },
 ]) ,addDocumentToUser)
-
-
+router.put('/updateUserByAdmin/:userId', updateUserByAdmin);
+router.put('/updateAccountVisibility/:userId', updateAccountVisibility);
 router.put('/updateCra/:missionId',upload.fields([
         { name: 'signature', maxCount: 1 },
 ]) ,updateCraInformations)
@@ -52,6 +59,11 @@ router.get('/getCraInformations/:missionId', getCraInformations)
 router.put('/editIdentificationDocument/:userId',upload.fields([
         { name: 'identificationDocument', maxCount: 1 },
 ]) ,editIdentificationDocument)
+
+router.put('/addCraPdfToUser/:missionId',upload.fields([
+        { name: 'craPdf', maxCount: 1 },
+]) ,addPDFtoUser)
+
 router.put('/editDrivingLiscence/:userId',upload.fields([
         { name: 'drivingLicense', maxCount: 1 },
 ]) ,editDrivingLiscence)

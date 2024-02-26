@@ -245,6 +245,7 @@ exports.validateContractValidation = async (req, res) => {
                                             dateOfBirth: preRegistration.personalInfo.dateOfBirth.value,
                                             location: preRegistration.personalInfo.location.value,
                                             nationality: preRegistration.personalInfo.nationality.value,
+                                            portage: preRegistration.personalInfo.portage.value,
                                             socialSecurityNumber: preRegistration.personalInfo.socialSecurityNumber.value,
                                             identificationDocument: preRegistration.personalInfo.identificationDocument.value,
                                             rib: preRegistration.personalInfo.rib.value,

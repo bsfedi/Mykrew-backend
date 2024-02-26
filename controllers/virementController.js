@@ -13,6 +13,7 @@ exports.createVirement = async (req, res) => {
         montant: virementInfo.montant
     })
 
+
     await virement.save()
         .then(async virement => {
 
@@ -44,7 +45,7 @@ exports.getVirementsByType = async (req, res) => {
         const virements = await Virement.find({ typeVirement: typeVirement });
 
         if (!virements || virements.length === 0) {
-            return res.status(404).json({ message: `Aucun virement trouvé pour le type ${typeVirement}` });
+            return res.status(200).json({ message: `Aucun virement trouvé pour le type ${typeVirement}` });
         }
 
         return res.status(200).json(virements);
@@ -59,7 +60,7 @@ exports.getAllVirements = async (req, res) => {
         const virements = await Virement.find();
 
         if (!virements || virements.length === 0) {
-            return res.status(404).json({ message: 'Aucun virement trouvé' });
+            return res.status(200).json({ message: 'Aucun virement trouvé' });
         }
 
         return res.status(200).json(virements);
@@ -76,7 +77,7 @@ exports.getVirementsByUserId = async (req, res) => {
         const virements = await Virement.find({ userId: userId });
 
         if (!virements || virements.length === 0) {
-            return res.status(404).json({ message: `Aucun virement trouvé pour l'utilisateur avec l'ID ${userId}` });
+            return res.status(200).json({ message: `Aucun virement trouvé pour l'utilisateur avec l'ID ${userId}` });
         }
 
         return res.status(200).json(virements);
@@ -87,9 +88,74 @@ exports.getVirementsByUserId = async (req, res) => {
 };
 
 exports.getVirementsByPeriode = async (req, res) => {
-    const periode = req.params.periode;
-
+    const periode = req.query.periode;
+    const userId = req.params.userId;
+    const typevirement = req.query.typevirement;
     let startDate;
+
+    if (!periode && !typevirement) {
+        try {
+            const allVirements = await Virement.find({ userId: userId });
+            return res.status(200).json(allVirements);
+        } catch (error) {
+            console.error(`Erreur lors de la récupération de tous les virements :`, error);
+            return res.status(500).json({ message: 'Erreur interne du serveur' });
+        }
+    }
+
+    if (!typevirement && periode){
+        switch (periode) {
+            case 'today':
+                startDate = moment().startOf('day');
+
+                break;
+            case '7days':
+                startDate = moment().subtract(7, 'days');
+                break;
+            case 'month':
+                startDate = moment().subtract(1, 'months');
+                break;
+            case 'year':
+                startDate = moment().subtract(1, 'years');
+
+                break;
+            default:
+                return res.status(400).json({ message: 'Période non prise en charge' });
+        }
+
+        try {
+            const virements = await Virement.find({
+                createdAt: { $gte: startDate.toDate() },
+                userId: userId,
+            })
+
+            return res.status(200).json(virements);
+        } catch (error) {
+            console.error(`Erreur lors de la récupération des virements pour la période spécifiée :`, error);
+            return res.status(500).json({ message: 'Erreur interne du serveur' });
+        }
+    }
+
+    if (!periode && typevirement){
+
+        try {
+            const virements = await Virement.find({
+                typeVirement: typevirement ,
+                userId: userId,
+            });
+
+            if (!virements || virements.length === 0) {
+                return res.status(200).json({ message: `Aucun virement trouvé pour la période spécifiée` });
+            }
+
+            return res.status(200).json(virements);
+        } catch (error) {
+            console.error(`Erreur lors de la récupération des virements pour la période spécifiée :`, error);
+            return res.status(500).json({ message: 'Erreur interne du serveur' });
+        }
+    }
+
+
     switch (periode) {
         case 'today':
             startDate = moment().startOf('day');
@@ -109,11 +175,13 @@ exports.getVirementsByPeriode = async (req, res) => {
 
     try {
         const virements = await Virement.find({
-            createdAt: { $gte: startDate.toDate() }
+            createdAt: { $gte: startDate.toDate() },
+            typeVirement: typevirement,
+            userId: userId,
         });
 
         if (!virements || virements.length === 0) {
-            return res.status(404).json({ message: `Aucun virement trouvé pour la période spécifiée` });
+            return res.status(200).json({ message: `Aucun virement trouvé` });
         }
 
         return res.status(200).json(virements);
@@ -121,6 +189,9 @@ exports.getVirementsByPeriode = async (req, res) => {
         console.error(`Erreur lors de la récupération des virements pour la période spécifiée :`, error);
         return res.status(500).json({ message: 'Erreur interne du serveur' });
     }
+
+
+
 };
 
 exports.getVirementsStatsByYear = async (req, res) => {
@@ -156,23 +227,23 @@ exports.getVirementsStatsByYear = async (req, res) => {
         ]);
 
         if (!virementsStats || virementsStats.length === 0) {
-            return res.status(404).json({ message: `Aucun virement trouvé pour l'année ${year}` });
+            return res.status(200).json({ message: `Aucun virement trouvé pour l'année ${year}` });
         }
-
-        const seriesDataCooptation = virementsStats.map(stat => stat.totalCooptation);
-        const seriesDataParticipation = virementsStats.map(stat => stat.totalParticipation);
-        const months = virementsStats.map(stat => moment(stat._id, "M").format("MMMM"));
+        const currentYear = new Date().getFullYear();
+        const categories = Array.from({ length: 12 }, (_, i) => {
+            const month = i + 1;
+            return `${month}/${currentYear}`;
+        });
 
         return res.status(200).json({
             series: [
-                { name: 'Cooptation', data: seriesDataCooptation },
-                { name: 'Participation', data: seriesDataParticipation }
+                { name: 'Cooptation', data: virementsStats.map(stat => stat.totalCooptation) },
+                { name: 'Participation', data: virementsStats.map(stat => stat.totalParticipation) }
             ],
-            categories: months
+            categories: categories
         });
     } catch (error) {
         console.error(`Erreur lors de la récupération des statistiques des virements pour l'année ${year} :`, error);
         return res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 };
-

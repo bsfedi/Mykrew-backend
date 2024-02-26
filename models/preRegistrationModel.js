@@ -7,6 +7,12 @@ const preRegistartionSchema = mongoose.Schema({
 
     userId:String,
     personalInfo: {
+
+        portage: {
+            value: String,
+            validated: Boolean,
+            causeNonValidation: String
+        },
         firstName: {
             value: String,
             validated: Boolean,
@@ -115,6 +121,8 @@ const preRegistartionSchema = mongoose.Schema({
         },
     },
     missionInfo: {
+
+
         profession: {
             value: String,
             validated: Boolean,
