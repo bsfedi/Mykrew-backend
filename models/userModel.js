@@ -60,7 +60,6 @@ const userSchema = new mongoose.Schema({
       signature: String,
       noteGlobale: String
     },
-
     missionInfo: {
       profession: String,
       industrySector: String,

@@ -2,10 +2,10 @@ const NewMission = require('../models/newMissionModel.js');
 const ContractProcess = require('../models/contractModel.js');
 const jwt = require('jsonwebtoken');
 const serviceJWT = require('../configuration/JWTConfig');
-const {checkEmptyFields, getPreRegistrationByContractId, getUserByPreregister, getMissionByContractId, findMissionById} = require("../utils/utils");
+const { checkEmptyFields, getPreRegistrationByContractId, getUserByPreregister, getMissionByContractId, findMissionById } = require("../utils/utils");
 const User = require("../models/userModel");
 const PreRegistration = require("../models/preRegistrationModel");
-const {getNotValidated} = require("./preRegistrationController");
+const { getNotValidated } = require("./preRegistrationController");
 const Notification = require("../models/notificationModel");
 const socketModule = require('../configuration/socketConfig');
 
@@ -17,7 +17,7 @@ exports.createNewMission = async (req, res) => {
         }
         const decoded = jwt.verify(token, serviceJWT.jwtSecret);
         const user = decoded.userId
-        const clientInfo  = req.body;
+        const clientInfo = req.body;
         const files = req.files;
         const isSimulationValidatedFilename = files.isSimulationValidated ? files.isSimulationValidated[0].filename : null;
         await NewMission.create(
@@ -51,7 +51,7 @@ exports.createNewMission = async (req, res) => {
 
             })
             await notification.save().then(notification => {
-                socketModule.getIO().emit("rhNotification", {notification: notification})
+                socketModule.getIO().emit("rhNotification", { notification: notification })
             })
                 .catch(error => {
                     console.log(error)
@@ -59,11 +59,11 @@ exports.createNewMission = async (req, res) => {
 
             return res.status(201).send(newMission);
 
-        }).catch((error) =>{
-            return res.status(500).json({ error: error});
+        }).catch((error) => {
+            return res.status(500).json({ error: error });
         })
     } catch (error) {
-        return res.status(500).json({ error: error});
+        return res.status(500).json({ error: error });
     }
 };
 
@@ -78,12 +78,12 @@ exports.getMyNewMission = async (req, res) => {
         const user = decoded.userId
 
         await NewMission
-            .find({userId : user})
+            .find({ userId: user })
             .then((newMissions) => {
                 return res.status(200).send(newMissions)
             })
             .catch((error) => {
-                return res.status(500).send({error: error})
+                return res.status(500).send({ error: error })
             })
 
     } catch (error) {
@@ -91,15 +91,16 @@ exports.getMyNewMission = async (req, res) => {
     }
 };
 
+
 exports.getNewMissionById = async (req, res) => {
 
     try {
-       const missionId = req.params.newMissionId
+        const missionId = req.params.newMissionId
 
         await NewMission
             .findById(missionId)
             .then((newMission) => {
-                if (!newMission){
+                if (!newMission) {
                     findMissionById(missionId)
                         .then(result => {
                             if (result) {
@@ -112,7 +113,7 @@ exports.getNewMissionById = async (req, res) => {
                             console.error('Erreur lors de la recherche de la mission :', error);
                         });
 
-                }else {
+                } else {
                     console.log(newMission)
                     const transformedMission = {
                         missionInfo: {
@@ -122,11 +123,10 @@ exports.getNewMissionById = async (req, res) => {
                             dailyRate: newMission.missionInfo.dailyRate.value,
                             startDate: newMission.missionInfo.startDate.value,
                             endDate: newMission.missionInfo.endDate.value,
-                            portage: newMission.missionInfo.portage.value,
                             isSimulationValidated: newMission.missionInfo.isSimulationValidated.value,
                         },
                         clientInfo: {
-                            company:newMission.clientInfo.company.value,
+                            company: newMission.clientInfo.company.value,
                             clientContact: {
                                 firstName: newMission.clientInfo.clientContact.firstName.value,
                                 lastName: newMission.clientInfo.clientContact.lastName.value,
@@ -146,7 +146,7 @@ exports.getNewMissionById = async (req, res) => {
 
             })
             .catch((error) => {
-                return res.status(500).send({error: error})
+                return res.status(500).send({ error: error })
             })
 
     } catch (error) {
@@ -157,116 +157,6 @@ exports.getNewMissionById = async (req, res) => {
 exports.RHvalidation = async (req, res) => {
 
 
-        const token = req.headers.authorization;
-        if (!token) {
-            return res.status(401).json({ message: 'Token non fourni' });
-        }
-        const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-        const role = decoded.role
-
-        if (role === "CONSULTANT"){
-            return res.status(403).send({error : "Unauthorized"})
-        }
-
-        let validated;
-        const rhValidation = req.body
-        const missionId = req.params.missionId
-        const rhValidationValues = Object.values(rhValidation);
-        const isFalseValuePresent = rhValidationValues.includes(false);
-        if (isFalseValuePresent) {
-            validated = "NOTVALIDATED"
-
-        } else {
-            validated = "WAITINGCONTRACT"
-            const newContractProcess = new ContractProcess();
-
-            const savedContractProcess = await newContractProcess.save();
-            const newMissionCo = await NewMission.findOneAndUpdate(
-                { _id: missionId },
-                {
-                    contractProcess: savedContractProcess._id,
-                },
-                { new: true }
-            );
-
-        }
-        await NewMission.findOneAndUpdate(
-            { _id: missionId },
-            {
-                [`clientInfo.company.validated`]: rhValidation.companyValidation,
-                [`clientInfo.company.causeNonValidation`]: rhValidation.companyCause,
-                [`clientInfo.clientContact.firstName.validated`]: rhValidation.clientfirstNameValidation,
-                [`clientInfo.clientContact.firstName.causeNonValidation`]: rhValidation.clientfirstNameCause,
-                [`clientInfo.clientContact.lastName.validated`]: rhValidation.clientlastNameValidation,
-                [`clientInfo.clientContact.lastName.causeNonValidation`]: rhValidation.clientlastNameCause,
-                [`clientInfo.clientContact.position.validated`]: rhValidation.clientPostionValidation,
-                [`clientInfo.clientContact.position.causeNonValidation`]: rhValidation.clientPositionCause,
-                [`clientInfo.clientContact.email.validated`]: rhValidation.clientEmailValidation,
-                [`clientInfo.clientContact.email.causeNonValidation`]: rhValidation.clientEmailCause,
-                [`clientInfo.clientContact.phoneNumber.validated`]: rhValidation.clientphoneNumberValidation,
-                [`clientInfo.clientContact.phoneNumber.causeNonValidation`]: rhValidation.clientphoneNumberCause,
-                [`missionInfo.profession.validated`]: rhValidation.professionvalidation,
-                [`missionInfo.profession.causeNonValidation`]: rhValidation.professionCause,
-                [`missionInfo.industrySector.validated`]: rhValidation.industrySectorValidated,
-                [`missionInfo.industrySector.causeNonValidation`]: rhValidation.industrySectorCause,
-                [`missionInfo.portage.validated`]: rhValidation.industrySectorValidated,
-                [`missionInfo.portage.causeNonValidation`]: rhValidation.industrySectorCause,
-                [`missionInfo.finalClient.validated`]: rhValidation.finalClientValidation,
-                [`missionInfo.finalClient.causeNonValidation`]: rhValidation.finalClientCause,
-                [`missionInfo.dailyRate.validated`]: rhValidation.dailyRateValidation,
-                [`missionInfo.dailyRate.causeNonValidation`]: rhValidation.dailyRateCause,
-                [`missionInfo.startDate.validated`]: rhValidation.startDateValidation,
-                [`missionInfo.startDate.causeNonValidation`]: rhValidation.startDateCause,
-                [`missionInfo.endDate.validated`]: rhValidation.endDateValidation,
-                [`missionInfo.endDate.causeNonValidation`]: rhValidation.endDateCause,
-                [`missionInfo.isSimulationValidated.validated`]: rhValidation.simulationValidation,
-                [`missionInfo.isSimulationValidated.causeNonValidation`]: rhValidation.simulationCause,
-                [`newMissionStatus`]: validated,
-            },
-            { new: true }
-        ).then(async (newMission) => {
-            if (!newMission){
-                return res.status(404).send("mission not found")
-            }else {
-                if (isFalseValuePresent) {
-                    const notification = new Notification({
-                        userId: newMission.userId,
-                        typeOfNotification: "MISSIONNOTVALID",
-                        toWho: "CONSULTANT",
-                        missionId: newMission._id,
-
-                    })
-                    await notification.save().then(notification => {
-                        socketModule.getIO().emit("rhNotification", {notification: notification})
-                    })
-
-
-                } else {
-                    const notification = new Notification({
-                        userId: newMission.userId,
-                        typeOfNotification: "MISSIONVALID",
-                        toWho: "CONSULTANT",
-                        missionId: newMission._id,
-
-                    })
-                    await notification.save().then(notification => {
-                        socketModule.getIO().emit("rhNotification", {notification: notification})
-                    })
-
-                }
-                return res.status(200).send(newMission)
-            }
-
-        }).catch((error) => {
-            return res.status(500).send(error)
-        });
-
-
-
-
-}
-
-exports.consultantEdit = async (req, res)=>{
     const token = req.headers.authorization;
     if (!token) {
         return res.status(401).json({ message: 'Token non fourni' });
@@ -274,8 +164,118 @@ exports.consultantEdit = async (req, res)=>{
     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
     const role = decoded.role
 
-    if (role !== "CONSULTANT"){
-        return res.status(403).send({error : "Unauthorized"})
+    if (role === "CONSULTANT") {
+        return res.status(403).send({ error: "Unauthorized" })
+    }
+
+    let validated;
+    const rhValidation = req.body
+    const missionId = req.params.missionId
+    const rhValidationValues = Object.values(rhValidation);
+    const isFalseValuePresent = rhValidationValues.includes(false);
+    if (isFalseValuePresent) {
+        validated = "NOTVALIDATED"
+
+    } else {
+        validated = "WAITINGCONTRACT"
+        const newContractProcess = new ContractProcess();
+
+        const savedContractProcess = await newContractProcess.save();
+        const newMissionCo = await NewMission.findOneAndUpdate(
+            { _id: missionId },
+            {
+                contractProcess: savedContractProcess._id,
+            },
+            { new: true }
+        );
+
+    }
+    await NewMission.findOneAndUpdate(
+        { _id: missionId },
+        {
+            [`clientInfo.company.validated`]: rhValidation.companyValidation,
+            [`clientInfo.company.causeNonValidation`]: rhValidation.companyCause,
+            [`clientInfo.clientContact.firstName.validated`]: rhValidation.clientfirstNameValidation,
+            [`clientInfo.clientContact.firstName.causeNonValidation`]: rhValidation.clientfirstNameCause,
+            [`clientInfo.clientContact.lastName.validated`]: rhValidation.clientlastNameValidation,
+            [`clientInfo.clientContact.lastName.causeNonValidation`]: rhValidation.clientlastNameCause,
+            [`clientInfo.clientContact.position.validated`]: rhValidation.clientPostionValidation,
+            [`clientInfo.clientContact.position.causeNonValidation`]: rhValidation.clientPositionCause,
+            [`clientInfo.clientContact.email.validated`]: rhValidation.clientEmailValidation,
+            [`clientInfo.clientContact.email.causeNonValidation`]: rhValidation.clientEmailCause,
+            [`clientInfo.clientContact.phoneNumber.validated`]: rhValidation.clientphoneNumberValidation,
+            [`clientInfo.clientContact.phoneNumber.causeNonValidation`]: rhValidation.clientphoneNumberCause,
+            [`missionInfo.profession.validated`]: rhValidation.professionvalidation,
+            [`missionInfo.profession.causeNonValidation`]: rhValidation.professionCause,
+            [`missionInfo.industrySector.validated`]: rhValidation.industrySectorValidated,
+            [`missionInfo.industrySector.causeNonValidation`]: rhValidation.industrySectorCause,
+            [`missionInfo.portage.validated`]: rhValidation.industrySectorValidated,
+            [`missionInfo.portage.causeNonValidation`]: rhValidation.industrySectorCause,
+            [`missionInfo.finalClient.validated`]: rhValidation.finalClientValidation,
+            [`missionInfo.finalClient.causeNonValidation`]: rhValidation.finalClientCause,
+            [`missionInfo.dailyRate.validated`]: rhValidation.dailyRateValidation,
+            [`missionInfo.dailyRate.causeNonValidation`]: rhValidation.dailyRateCause,
+            [`missionInfo.startDate.validated`]: rhValidation.startDateValidation,
+            [`missionInfo.startDate.causeNonValidation`]: rhValidation.startDateCause,
+            [`missionInfo.endDate.validated`]: rhValidation.endDateValidation,
+            [`missionInfo.endDate.causeNonValidation`]: rhValidation.endDateCause,
+            [`missionInfo.isSimulationValidated.validated`]: rhValidation.simulationValidation,
+            [`missionInfo.isSimulationValidated.causeNonValidation`]: rhValidation.simulationCause,
+            [`newMissionStatus`]: validated,
+        },
+        { new: true }
+    ).then(async (newMission) => {
+        if (!newMission) {
+            return res.status(404).send("mission not found")
+        } else {
+            if (isFalseValuePresent) {
+                const notification = new Notification({
+                    userId: newMission.userId,
+                    typeOfNotification: "MISSIONNOTVALID",
+                    toWho: "CONSULTANT",
+                    missionId: newMission._id,
+
+                })
+                await notification.save().then(notification => {
+                    socketModule.getIO().emit("rhNotification", { notification: notification })
+                })
+
+
+            } else {
+                const notification = new Notification({
+                    userId: newMission.userId,
+                    typeOfNotification: "MISSIONVALID",
+                    toWho: "CONSULTANT",
+                    missionId: newMission._id,
+
+                })
+                await notification.save().then(notification => {
+                    socketModule.getIO().emit("rhNotification", { notification: notification })
+                })
+
+            }
+            return res.status(200).send(newMission)
+        }
+
+    }).catch((error) => {
+        return res.status(500).send(error)
+    });
+
+
+
+
+}
+
+exports.consultantEdit = async (req, res) => {
+    const token = req.headers.authorization;
+    if (!token) {
+        return res.status(401).json({ message: 'Token non fourni' });
+    }
+    const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+    const role = decoded.role
+
+    if (role !== "CONSULTANT") {
+        return res.status(403).send({ error: "Unauthorized" })
     }
     try {
         const rhValidation = req.body
@@ -347,8 +347,8 @@ exports.consultantEdit = async (req, res)=>{
             { new: true }
         );
         return res.json(updatedNewMission);
-    }catch (error) {
-        return res.status(500).json({ error: error});
+    } catch (error) {
+        return res.status(500).json({ error: error });
     }
 
 }
@@ -464,16 +464,16 @@ exports.validateContractValidationMission = async (req, res) => {
 
         await updatedContractProcess.save();
 
-        if (updatedContractProcess.statut){
+        if (updatedContractProcess.statut) {
             getMissionByContractId(contractProcessId)
                 .then(async (mission) => {
-                    if (mission){
-                        await NewMission.findOneAndUpdate({_id: mission._id},
-                            {newMissionStatus: "VALIDATED"}).then(()=>{
-                            console.log("suceess")
-                        }).catch(error => {
-                            console.log("error while changing mission stauts")
-                        })
+                    if (mission) {
+                        await NewMission.findOneAndUpdate({ _id: mission._id },
+                            { newMissionStatus: "VALIDATED" }).then(() => {
+                                console.log("suceess")
+                            }).catch(error => {
+                                console.log("error while changing mission stauts")
+                            })
                         await User.findById(mission.userId)
                             .then(async (user) => {
                                 const missionData = {
@@ -501,7 +501,7 @@ exports.validateContractValidationMission = async (req, res) => {
 
                                 };
 
-                                await NewMission.findOneAndDelete({_id: mission._id}).then(deleted => {
+                                await NewMission.findOneAndDelete({ _id: mission._id }).then(deleted => {
                                     console.log(deleted)
                                 })
                                 try {
@@ -509,7 +509,7 @@ exports.validateContractValidationMission = async (req, res) => {
 
                                     await user.addMission(missionData);
                                 } catch (error) {
-                                    return res.status(500).json({error: 'An error occurred while updating the user.'});
+                                    return res.status(500).json({ error: 'An error occurred while updating the user.' });
                                 }
 
 
@@ -567,20 +567,20 @@ exports.validateContractValidationMission = async (req, res) => {
 
                                         try {
                                             const user = await User.findOneAndUpdate(
-                                                {preRegister: preRegistration.id},
+                                                { preRegister: preRegistration.id },
                                                 {}
                                             );
 
                                             await user.addMission(missionData);
                                             await user.addPersonalInfo(personalInfoData);
-                                        }catch (error){
+                                        } catch (error) {
                                             return res.status(500).json({ error: 'An error occurred while updating the user.' });
                                         }
 
 
                                     }).catch((error) => {
-                                    console.error('Error:', error.message);
-                                })
+                                        console.error('Error:', error.message);
+                                    })
 
                             })
                             .catch((error) => {
@@ -597,7 +597,7 @@ exports.validateContractValidationMission = async (req, res) => {
 
 
     } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while updating ContractProcess.'});
+        return res.status(500).json({ error: 'An error occurred while updating ContractProcess.' });
     }
 };
 
@@ -612,7 +612,7 @@ exports.getNewMissionnotValidatedById = async (req, res) => {
                 return res.status(200).send(newMission)
             })
             .catch((error) => {
-                return res.status(500).send({error: error})
+                return res.status(500).send({ error: error })
             })
 
     } catch (error) {
@@ -650,14 +650,14 @@ exports.getAllNewMissions = async (req, res) => {
 exports.getPendingMissions = async (req, res) => {
     try {
 
-            const token = req.headers.authorization;
-            if (!token) {
-                return res.status(401).json({ message: 'Token non fourni' });
-            }
-            const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-            const userId = decoded.userId
+        const token = req.headers.authorization;
+        if (!token) {
+            return res.status(401).json({ message: 'Token non fourni' });
+        }
+        const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+        const userId = decoded.userId
 
-        await NewMission.find({ newMissionStatus: { $in: ['PENDING','WAITINGCONTRACT']}, userId: userId })
+        await NewMission.find({ newMissionStatus: { $in: ['PENDING', 'WAITINGCONTRACT'] }, userId: userId })
             .then(pendingMissions => {
                 console.log(pendingMissions)
                 return res.json(pendingMissions);
@@ -680,20 +680,20 @@ exports.getValidatedMissions = async (req, res) => {
     const userId = decoded.userId
 
 
-try {
+    try {
 
 
         const user = await User.findById(userId);
         const allMissions = [];
 
 
-            user.missions.forEach(mission => {
-                allMissions.push(mission.toObject());
-            });
+        user.missions.forEach(mission => {
+            allMissions.push(mission.toObject());
+        });
 
         return res.status(200).send(allMissions)
-    }catch (e) {
-    return res.status(500).send({error: "Server error"})
+    } catch (e) {
+        return res.status(500).send({ error: "Server error" })
     }
 };
 
@@ -706,10 +706,10 @@ exports.getNotValidatedMissions = async (req, res) => {
         const decoded = jwt.verify(token, serviceJWT.jwtSecret);
         const userId = decoded.userId
 
-        const notValidatedNewMission = await NewMission.find({ newMissionStatus: { $in: ['NOTVALIDATED'] },userId: userId });
-        if (notValidatedNewMission.length === 0){
+        const notValidatedNewMission = await NewMission.find({ newMissionStatus: { $in: ['NOTVALIDATED'] }, userId: userId });
+        if (notValidatedNewMission.length === 0) {
             return res.status(404).json("There are not not validated new mission");
-        }else{
+        } else {
             return res.json(notValidatedNewMission);
         }
     } catch (error) {
