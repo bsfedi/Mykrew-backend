@@ -780,10 +780,7 @@ exports.addPDFtoUser = async (req, res) => {
       { "missions._id": missionId },
       {
         $push: {
-          "missions.$.craInformation.craPDF": {
-            filename: craPdfFilename,
-            date: currentDate // Add the current date to the PDF object
-          }
+          "missions.$.craInformation.craPDF": JSON.stringify({ filename: craPdfFilename, date: currentDate })
         },
       },
       { new: true }
@@ -803,6 +800,7 @@ exports.addPDFtoUser = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 
 exports.getAllCras = async (req, res) => {
 
