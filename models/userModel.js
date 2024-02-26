@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: roles,
-    default: 'CONSULTANT', 
+    default: 'CONSULTANT',
   },
   preRegister: {
     type: mongoose.Schema.Types.ObjectId,
@@ -44,18 +44,23 @@ const userSchema = new mongoose.Schema({
     },
 
     craInformation: {
-      selectedDates : [{
+      selectedDates: [{
         date: {
           type: Date,
           default: null
         }
       }],
       craPDF: [{
-        type: String
+        filename: String,
+        uploadDate: {
+          type: Date,
+          default: Date.now
+        }
       }],
       signature: String,
       noteGlobale: String
     },
+
     missionInfo: {
       profession: String,
       industrySector: String,
@@ -79,7 +84,7 @@ const userSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'contractProcess'
     },
-    newMissionStatus:{
+    newMissionStatus: {
       type: String,
       enum: newMissionStatus,
       default: 'PENDING',
@@ -105,14 +110,14 @@ const userSchema = new mongoose.Schema({
     },
   },
 
-  userDocuments:[{
+  userDocuments: [{
     _id: {
       type: mongoose.Schema.Types.ObjectId,
       default: new mongoose.Types.ObjectId()
     },
     documentName: String,
     document: String,
-    createdAt:{
+    createdAt: {
       type: Date,
       default: Date.now()
     }

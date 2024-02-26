@@ -769,18 +769,24 @@ exports.updateAccountVisibility = async (req, res) => {
       res.status(500).json({ message: error.message });
     })
 }
+
 exports.addPDFtoUser = async (req, res) => {
   try {
     const missionId = req.params.missionId;
     const files = req.files;
     const craPdfFilename = files.craPdf ? files.craPdf[0].filename : null;
-    const currentDate = new Date(); // Add this line to get the current date
+
+    // Add the current date
+    const currentDate = new Date();
 
     const updatedUser = await User.findOneAndUpdate(
       { "missions._id": missionId },
       {
         $push: {
-          "missions.$.craInformation.craPDF": { filename: craPdfFilename, date: currentDate }
+          "missions.$.craInformation.craPDF": {
+            filename: craPdfFilename,
+            uploadDate: currentDate
+          },
         },
       },
       { new: true }
@@ -800,7 +806,6 @@ exports.addPDFtoUser = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
-
 
 
 exports.getAllCras = async (req, res) => {
