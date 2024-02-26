@@ -25,6 +25,39 @@ const io = socketModule.initializeSocket(server);
 
 
 
+const cron = require('node-cron');
+
+
+const https = require('https');
+
+function pingServer() {
+    const url = 'https://mykrew-backend.onrender.com/';
+
+    const req = https.get(url, (res) => {
+        if (res.statusCode === 200) {
+            console.log('Server pinged successfully');
+        } else {
+            console.error(`Server ping failed with status code: ${res.statusCode}`);
+        }
+    });
+
+    req.on('error', (error) => {
+        console.error('Error pinging server:', error);
+    });
+
+    req.end();
+}
+
+
+
+// Define your cron job schedule and task
+cron.schedule('* * * * *', () => {
+    console.log('Cron job is running...');
+    pingServer()
+    // Place your task here
+});
+
+
 
 const uploadFolder = './uploads';
 if (!fs.existsSync(uploadFolder)) {
@@ -32,9 +65,9 @@ if (!fs.existsSync(uploadFolder)) {
 }
 const corsOptions = {
     origin: '*'
-  };
+};
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-  app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
 console.log('Starting your application...');
 
@@ -65,12 +98,12 @@ app.use("/virement", virementRoutes)
 const port = 3001;
 server.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
-   
+
     connectDB();
     require('./utils/scheduleJos');
 });
 
 app.get('/', (req, res) => {
     res.send('Hello, World!');
-  });
+});
 
