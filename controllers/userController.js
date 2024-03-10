@@ -6,8 +6,105 @@ const serviceJWT = require('../configuration/JWTConfig');
 const bcrypt = require('bcrypt');
 const { decode } = require("jsonwebtoken");
 const { findMissionById } = require("../utils/utils")
+const emailService = require('../services/emailService');
+
 const fs = require('fs').promises;
 const moment = require('moment');
+
+
+exports.resetPassword = async (req, res) => {
+  const { user_id } = req.params;
+  const { newPassword } = req.body;
+
+  try {
+    // Find the user by user_id in MongoDB
+    const user = await User.findById(user_id);
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password
+    user.password = hashedPassword;
+    await user.save();
+
+    // You might want to add additional logic here such as sending an email to notify the user about the password change
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).send('Internal Server Error');
+  }
+};
+exports.sendForgotPasswordMail = async (req, res) => {
+  // Extract email address from request
+  const { email } = req.body;
+
+  try {
+    // Find the user by email in MongoDB
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    // Construct email message with the user's ID in the link
+    const resetLink = `https://mykrew-frontend-hhyc.vercel.app/change-mot-de-passe/${user._id}`;
+
+    // Construct email subject and HTML content
+    const subject = 'Password Reset';
+    const htmlContent = `<p>To reset your password, please click on the following link:</p><p><a href="${resetLink}">${resetLink}</a></p>`;
+
+    // Send the email using your existing email service
+    const emailSent = await emailService.sendEmail(email, subject, htmlContent);
+
+    if (emailSent) {
+      console.log('Email sent successfully');
+      res.status(201).json({ message: 'Email sent successfully' });
+    } else {
+      console.error('Failed to send email');
+      res.status(500).send('Failed to send email');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+exports.sendemailtoconsultant = async (req, res) => {
+  // Extract email address from request
+  const { email } = req.body;
+  const { subject } = req.body;
+  const { message } = req.body;
+
+  try {
+    // Find the user by email in MongoDB
+
+
+    // Construct email message with the user's ID in the link
+
+    // Construct email subject and HTML content
+
+    const htmlContent = message
+    // Send the email using your existing email service
+    const emailSent = await emailService.sendEmail(email, subject, htmlContent);
+
+    if (emailSent) {
+      console.log('Email sent successfully');
+      res.status(201).json({ message: 'Email sent successfully' });
+    } else {
+      console.error('Failed to send email');
+      res.status(500).send('Failed to send email');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
 exports.register = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -43,6 +140,42 @@ exports.register = async (req, res) => {
     res.status(500).json({ message: 'Registration failed' });
   }
 };
+
+exports.craInformation = async (req, res) => {
+  try {
+    // Query all users
+    const users = await User.find({});
+
+    // Array to store users with craInformation
+    const usersWithCraInformation = [];
+
+    // Iterate over each user
+    users.forEach(user => {
+      // Iterate over user's missions
+      user.missions.forEach(mission => {
+        // Check if craInformation exists in the mission
+        if (mission.craInformation && Object.keys(mission.craInformation).length !== 0) {
+          // If craInformation exists, add firstname and lastname to the list
+          usersWithCraInformation.push({
+            firstName: user.personalInfo.firstName,
+            lastName: user.personalInfo.lastName,
+            craInformation: mission.craInformation
+          });
+        }
+      });
+    });
+
+    // Send the response
+    res.json(usersWithCraInformation);
+  } catch (error) {
+    // Handle errors
+    console.error('Error fetching craInformation:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+
 
 exports.login = async (req, res) => {
   try {

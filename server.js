@@ -16,7 +16,7 @@ const virementRoutes = require("./routes/virementRoutes");
 
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
-
+const PORT = process.env.PORT || 5001;
 const http = require('http');
 const socketModule = require('./configuration/socketConfig.js');
 
@@ -95,9 +95,9 @@ app.use("/notification", notificationRoutes)
 app.use("/tjmRequest", tjmRequestRoutes)
 app.use("/virement", virementRoutes)
 
-const port = 3001;
-server.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 
     connectDB();
     require('./utils/scheduleJos');

@@ -5,33 +5,33 @@ const jwt = require('jsonwebtoken');
 const serviceJWT = require('../configuration/JWTConfig');
 const emailService = require('../services/emailService');
 const emailTemplates = require('../services/emailTemplates/emailTemplates');
-const {checkEmptyFields} = require("../utils/utils");
+const { checkEmptyFields } = require("../utils/utils");
 const socketModule = require('../configuration/socketConfig');
 
 
 exports.createPreRegistration1 = async (req, res) => {
     try {
-      const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: 'Token non fourni' });
-      }
-      const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-      const register = decoded.preRegistration
-      const  personalInfo  = req.body;
-      const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
-          { _id: register },
-          {
-            [`personalInfo.firstName.value`]: personalInfo.firstName,
-            [`personalInfo.lastName.value`]: personalInfo.lastName,
-            [`personalInfo.email.value`]: personalInfo.email,
-            [`personalInfo.phoneNumber.value`]: personalInfo.phoneNumber,
-            [`personalInfo.portage.value`]: personalInfo.portage,
-            [`personalInfo.dateOfBirth.value`]: personalInfo.dateOfBirth,
-            [`personalInfo.location.value`]: personalInfo.location,
-            [`personalInfo.nationality.value`]: personalInfo.nationality,
-          },
-          { new: true }
-      );
+        const token = req.headers.authorization;
+        if (!token) {
+            return res.status(401).json({ message: 'Token non fourni' });
+        }
+        const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+        const register = decoded.preRegistration
+        const personalInfo = req.body;
+        const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
+            { _id: register },
+            {
+                [`personalInfo.firstName.value`]: personalInfo.firstName,
+                [`personalInfo.lastName.value`]: personalInfo.lastName,
+                [`personalInfo.email.value`]: personalInfo.email,
+                [`personalInfo.phoneNumber.value`]: personalInfo.phoneNumber,
+                [`personalInfo.portage.value`]: personalInfo.portage,
+                [`personalInfo.dateOfBirth.value`]: personalInfo.dateOfBirth,
+                [`personalInfo.location.value`]: personalInfo.location,
+                [`personalInfo.nationality.value`]: personalInfo.nationality,
+            },
+            { new: true }
+        );
         const emailSubject = 'PreRegister Created';
         const emailHTML = emailTemplates.preregisterTemplate;
 
@@ -46,11 +46,11 @@ exports.createPreRegistration1 = async (req, res) => {
             .catch((error) => {
                 console.error('Error while sending email:', error);
             });
-      return res.json(updatedPreRegistration);
+        return res.json(updatedPreRegistration);
     } catch (error) {
-      return res.status(500).json({ error: error});
+        return res.status(500).json({ error: error });
     }
-  };
+};
 
 exports.createPreRegistration2 = async (req, res) => {
     try {
@@ -60,7 +60,7 @@ exports.createPreRegistration2 = async (req, res) => {
         }
         const decoded = jwt.verify(token, serviceJWT.jwtSecret);
         const register = decoded.preRegistration
-        const clientInfo  = req.body;
+        const clientInfo = req.body;
         const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
             { _id: register },
             {
@@ -76,51 +76,51 @@ exports.createPreRegistration2 = async (req, res) => {
 
         return res.json(updatedPreRegistration);
     } catch (error) {
-        return res.status(500).json({ error: error});
+        return res.status(500).json({ error: error });
     }
 };
 
 exports.createPreRegistration3 = async (req, res) => {
 
-        const token = req.headers.authorization;
-        if (!token) {
-            return res.status(401).json({ message: 'Token non fourni' });
-        }
-        const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-        const register = decoded.preRegistration
-        const missionInfo  = req.body;
-        const files = req.files;
-        const isSimulationValidatedFilename = files.isSimulationValidated ? files.isSimulationValidated[0].filename : null;
-        const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
-            { _id: register },
-            {
-                [`missionInfo.profession.value`]: missionInfo.profession,
-                [`missionInfo.industrySector.value`]: missionInfo.industrySector,
-                [`missionInfo.finalClient.value`]: missionInfo.finalClient,
-                [`missionInfo.dailyRate.value`]: missionInfo.dailyRate,
-                [`missionInfo.startDate.value`]: missionInfo.startDate,
-                [`missionInfo.endDate.value`]: missionInfo.endDate,
-                [`missionInfo.isSimulationValidated.value`]: isSimulationValidatedFilename,
-                [`status`]:'PENDING',
-               },
-            { new: true }
-        );
-        const notification = new Notification({
-            userId: updatedPreRegistration.userId,
-            typeOfNotification: "NEWPREREGISTER",
-            toWho: "RH",
-            preregisterId: updatedPreRegistration._id,
+    const token = req.headers.authorization;
+    if (!token) {
+        return res.status(401).json({ message: 'Token non fourni' });
+    }
+    const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+    const register = decoded.preRegistration
+    const missionInfo = req.body;
+    const files = req.files;
+    const isSimulationValidatedFilename = files.isSimulationValidated ? files.isSimulationValidated[0].filename : null;
+    const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
+        { _id: register },
+        {
+            [`missionInfo.profession.value`]: missionInfo.profession,
+            [`missionInfo.industrySector.value`]: missionInfo.industrySector,
+            [`missionInfo.finalClient.value`]: missionInfo.finalClient,
+            [`missionInfo.dailyRate.value`]: missionInfo.dailyRate,
+            [`missionInfo.startDate.value`]: missionInfo.startDate,
+            [`missionInfo.endDate.value`]: missionInfo.endDate,
+            [`missionInfo.isSimulationValidated.value`]: isSimulationValidatedFilename,
+            [`status`]: 'PENDING',
+        },
+        { new: true }
+    );
+    const notification = new Notification({
+        userId: updatedPreRegistration.userId,
+        typeOfNotification: "NEWPREREGISTER",
+        toWho: "RH",
+        preregisterId: updatedPreRegistration._id,
 
+    })
+    await notification.save().
+        then(notification => {
+            socketModule.getIO().emit("rhNotification", { notification: notification })
         })
-        await notification.save().
-            then(notification => {
-            socketModule.getIO().emit("rhNotification",{notification: notification})
+        .catch(error => {
+            console.log(error)
         })
-            .catch(error => {
-                console.log(error)
-            })
 
-        return res.json(updatedPreRegistration);
+    return res.json(updatedPreRegistration);
 
 };
 
@@ -132,7 +132,7 @@ exports.createPreRegistration5 = async (req, res) => {
     }
     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
     const register = decoded.preRegistration
-    const missionInfo  = req.body;
+    const missionInfo = req.body;
     const files = req.files;
     const isSimulationValidatedFilename = files.isSimulationValidated ? files.isSimulationValidated[0].filename : null;
     const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
@@ -157,30 +157,30 @@ exports.createPreRegistration5 = async (req, res) => {
 
 exports.createPreRegistration4 = async (req, res) => {
 
-        const token = req.headers.authorization;
-        if (!token) {
-            return res.status(401).json({ message: 'Token non fourni' });
-        }
-        const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-        const register = decoded.preRegistration
-        const  personalInfo  = req.body;
-        const files = req.files;
-        const drivingLicenseFilename = files.drivingLicense ? files.drivingLicense[0].filename : null;
-        const ribDocumentFilename = files.ribDocument ? files.ribDocument[0].filename : null;
+    const token = req.headers.authorization;
+    if (!token) {
+        return res.status(401).json({ message: 'Token non fourni' });
+    }
+    const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+    const register = decoded.preRegistration
+    const personalInfo = req.body;
+    const files = req.files;
+    const drivingLicenseFilename = files.drivingLicense ? files.drivingLicense[0].filename : null;
+    const ribDocumentFilename = files.ribDocument ? files.ribDocument[0].filename : null;
 
-        const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
-            { _id: register },
-            {
-                [`personalInfo.socialSecurityNumber.value`]: personalInfo.socialSecurityNumber,
-                [`personalInfo.identificationDocument.value`]: files.identificationDocument[0].filename,
-                [`personalInfo.rib.value`]: personalInfo.rib,
-                [`personalInfo.ribDocument.value`]: ribDocumentFilename,
-                [`personalInfo.carInfo.hasCar.value`]: personalInfo.hasCar,
-                [`personalInfo.carInfo.drivingLicense.value`]: drivingLicenseFilename
-            },
-            { new: true }
-        );
-        return res.json(updatedPreRegistration);
+    const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
+        { _id: register },
+        {
+            [`personalInfo.socialSecurityNumber.value`]: personalInfo.socialSecurityNumber,
+            [`personalInfo.identificationDocument.value`]: files.identificationDocument[0].filename,
+            [`personalInfo.rib.value`]: personalInfo.rib,
+            [`personalInfo.ribDocument.value`]: ribDocumentFilename,
+            [`personalInfo.carInfo.hasCar.value`]: personalInfo.hasCar,
+            [`personalInfo.carInfo.drivingLicense.value`]: drivingLicenseFilename
+        },
+        { new: true }
+    );
+    return res.json(updatedPreRegistration);
 
 };
 
@@ -188,16 +188,16 @@ exports.getPreRegistrationById = async (req, res) => {
     const preRegistrationId = req.params.preRegistrationId;
 
     try {
-      const preRegistration = await PreRegistration
-        .findById(preRegistrationId)
+        const preRegistration = await PreRegistration
+            .findById(preRegistrationId)
 
-      if (!preRegistration) {
-        return res.status(404).json({ error: 'PreRegistration not found.' });
-      }
+        if (!preRegistration) {
+            return res.status(404).json({ error: 'PreRegistration not found.' });
+        }
 
-      return res.json(preRegistration);
+        return res.json(preRegistration);
     } catch (error) {
-      return res.status(500).json({ error: 'An error occurred while fetching PreRegistration.' });
+        return res.status(500).json({ error: 'An error occurred while fetching PreRegistration.' });
     }
 };
 
@@ -210,131 +210,131 @@ exports.getMyPreRegistration = async (req, res) => {
     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
     const preRegistrationId = decoded.preRegistration
     try {
-      const preRegistration = await PreRegistration
-        .findById(preRegistrationId)
+        const preRegistration = await PreRegistration
+            .findById(preRegistrationId)
 
 
-      if (!preRegistration) {
-        return res.status(404).json({ error: 'PreRegistration not found.' });
-      }
+        if (!preRegistration) {
+            return res.status(404).json({ error: 'PreRegistration not found.' });
+        }
 
-      return res.json(preRegistration);
+        return res.json(preRegistration);
     } catch (error) {
-      return res.status(500).json({ error: 'An error occurred while fetching PreRegistration.' });
+        return res.status(500).json({ error: 'An error occurred while fetching PreRegistration.' });
     }
 };
 
-exports.RHvalidation = async (req, res)=>{
-     const token = req.headers.authorization;
-     if (!token) {
-         return res.status(401).json({ message: 'Token non fourni' });
-     }
-     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-     const role = decoded.role
+exports.RHvalidation = async (req, res) => {
+    const token = req.headers.authorization;
+    if (!token) {
+        return res.status(401).json({ message: 'Token non fourni' });
+    }
+    const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+    const role = decoded.role
 
-     if (role === "CONSULTANT"){
-         return res.status(403).send({error : "Unauthorized"})
-     }
-     try {
-         let validated;
-         const rhValidation = req.body
-         const registerId = req.params.preRegistrationId
+    if (role === "CONSULTANT") {
+        return res.status(403).send({ error: "Unauthorized" })
+    }
+    try {
+        let validated;
+        const rhValidation = req.body
+        const registerId = req.params.preRegistrationId
 
-         const rhValidationValues = Object.values(rhValidation);
-         const isFalseValuePresent = rhValidationValues.includes(false);
-         if (isFalseValuePresent) {
-             validated = "NOTVALIDATED"
-         } else {
-             validated = "VALIDATED"
+        const rhValidationValues = Object.values(rhValidation);
+        const isFalseValuePresent = rhValidationValues.includes(false);
+        if (isFalseValuePresent) {
+            validated = "NOTVALIDATED"
+        } else {
+            validated = "VALIDATED"
 
-             const newContractProcess = new ContractProcess();
-             const savedContractProcess = await newContractProcess.save();
+            const newContractProcess = new ContractProcess();
+            const savedContractProcess = await newContractProcess.save();
 
-              await PreRegistration.findOneAndUpdate(
-                 { _id: registerId },
-                  {
-                     contractProcess: savedContractProcess._id,
-                 },
-                 { new: true }
-             );
-
-
-
-         }
-
-         const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
-             { _id: registerId },
-             {
-                 [`personalInfo.firstName.validated`]: rhValidation.firstNameValidation,
-                 [`personalInfo.firstName.causeNonValidation`]: rhValidation.firstNameCause,
-                 [`personalInfo.lastName.validated`]: rhValidation.lastNameValidation,
-                 [`personalInfo.lastName.causeNonValidation`]: rhValidation.lastNameCause,
-                 [`personalInfo.email.validated`]: rhValidation.emailValidation,
-                 [`personalInfo.email.causeNonValidation`]: rhValidation.emailCause,
-                 [`personalInfo.phoneNumber.validated`]: rhValidation.phoneNumberValidation,
-                 [`personalInfo.phoneNumber.causeNonValidation`]: rhValidation.phoneNumberCause,
-                 [`personalInfo.dateOfBirth.validated`]: rhValidation.dateOfBirthValidaton,
-                 [`personalInfo.dateOfBirth.causeNonValidation`]: rhValidation.dateOfBirthCause,
-                 [`personalInfo.location.validated`]: rhValidation.locationValidation,
-                 [`personalInfo.location.causeNonValidation`]: rhValidation.locationCause,
-                 [`personalInfo.nationality.validated`]: rhValidation.nationalityValidation,
-                 [`personalInfo.nationality.causeNonValidation`]: rhValidation.nationalityCause,
-                 [`personalInfo.socialSecurityNumber.validated`]: rhValidation.socialSecurityNumberValidation,
-                 [`personalInfo.socialSecurityNumber.causeNonValidation`]: rhValidation.socialSecurityNumberCause,
-                 [`personalInfo.identificationDocument.validated`]: rhValidation.identificationDocumentValidation,
-                 [`personalInfo.identificationDocument.causeNonValidation`]: rhValidation.identificationDocumentCause,
-                 [`personalInfo.rib.validated`]: rhValidation.ribValidation,
-                 [`personalInfo.rib.causeNonValidation`]: rhValidation.ribCause,
-                 [`personalInfo.ribDocument.validated`]: rhValidation.ribDocumentValidation,
-                 [`personalInfo.ribDocument.causeNonValidation`]: rhValidation.ribDocumentCause,
-                 [`personalInfo.carInfo.drivingLicense.validated`]: rhValidation.drivingLicenseValidation,
-                 [`personalInfo.carInfo.drivingLicense.causeNonValidation`]: rhValidation.drivingLicenseCause,
-                 [`personalInfo.carInfo.carRegistration.validated`]: rhValidation.carRegistrationValidation,
-                 [`personalInfo.carInfo.carRegistration.causeNonValidation`]: rhValidation.carRegistrationCause,
-                 [`clientInfo.company.validated`]: rhValidation.companyValidation,
-                 [`clientInfo.company.causeNonValidation`]: rhValidation.companyCause,
-                 [`clientInfo.clientContact.firstName.validated`]: rhValidation.clientfirstNameValidation,
-                 [`clientInfo.clientContact.firstName.causeNonValidation`]: rhValidation.clientfirstNameCause,
-                 [`clientInfo.clientContact.lastName.validated`]: rhValidation.clientlastNameValidation,
-                 [`clientInfo.clientContact.lastName.causeNonValidation`]: rhValidation.clientlastNameCause,
-                 [`clientInfo.clientContact.position.validated`]: rhValidation.clientPostionValidation,
-                 [`clientInfo.clientContact.position.causeNonValidation`]: rhValidation.clientPositionCause,
-                 [`clientInfo.clientContact.email.validated`]: rhValidation.clientEmailValidation,
-                 [`clientInfo.clientContact.email.causeNonValidation`]: rhValidation.clientEmailCause,
-                 [`clientInfo.clientContact.phoneNumber.validated`]: rhValidation.clientphoneNumberValidation,
-                 [`clientInfo.clientContact.phoneNumber.causeNonValidation`]: rhValidation.clientphoneNumberCause,
-                 [`missionInfo.profession.validated`]: rhValidation.professionvalidation,
-                 [`missionInfo.profession.causeNonValidation`]: rhValidation.professionCause,
-                 [`missionInfo.industrySector.validated`]: rhValidation.industrySectorValidated,
-                 [`missionInfo.industrySector.causeNonValidation`]: rhValidation.industrySectorCause,
-                 [`personalInfo.portage.validated`]: rhValidation.portageValidated,
-                 [`personalInfo.portage.causeNonValidation`]: rhValidation.portageCause,
-                 [`missionInfo.finalClient.validated`]: rhValidation.finalClientValidation,
-                 [`missionInfo.finalClient.causeNonValidation`]: rhValidation.finalClientCause,
-                 [`missionInfo.dailyRate.validated`]: rhValidation.dailyRateValidation,
-                 [`missionInfo.dailyRate.causeNonValidation`]: rhValidation.dailyRateCause,
-                 [`missionInfo.startDate.validated`]: rhValidation.startDateValidation,
-                 [`missionInfo.startDate.causeNonValidation`]: rhValidation.startDateCause,
-                 [`missionInfo.endDate.validated`]: rhValidation.endDateValidation,
-                 [`missionInfo.endDate.causeNonValidation`]: rhValidation.endDateCause,
-                 [`missionInfo.isSimulationValidated.validated`]: rhValidation.simulationValidation,
-                 [`missionInfo.isSimulationValidated.causeNonValidation`]: rhValidation.simulationCause,
-                 [`status`]: validated,
-             },
-             { new: true }
-         );
+            await PreRegistration.findOneAndUpdate(
+                { _id: registerId },
+                {
+                    contractProcess: savedContractProcess._id,
+                },
+                { new: true }
+            );
 
 
 
-
-        if (!updatedPreRegistration){
-            return res.status(404).json({error : "preregister not found"});
         }
 
-         return res.json(updatedPreRegistration);
-     }catch (error) {
-         return res.status(500).json({ error: error});
-     }
+        const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
+            { _id: registerId },
+            {
+                [`personalInfo.firstName.validated`]: rhValidation.firstNameValidation,
+                [`personalInfo.firstName.causeNonValidation`]: rhValidation.firstNameCause,
+                [`personalInfo.lastName.validated`]: rhValidation.lastNameValidation,
+                [`personalInfo.lastName.causeNonValidation`]: rhValidation.lastNameCause,
+                [`personalInfo.email.validated`]: rhValidation.emailValidation,
+                [`personalInfo.email.causeNonValidation`]: rhValidation.emailCause,
+                [`personalInfo.phoneNumber.validated`]: rhValidation.phoneNumberValidation,
+                [`personalInfo.phoneNumber.causeNonValidation`]: rhValidation.phoneNumberCause,
+                [`personalInfo.dateOfBirth.validated`]: rhValidation.dateOfBirthValidaton,
+                [`personalInfo.dateOfBirth.causeNonValidation`]: rhValidation.dateOfBirthCause,
+                [`personalInfo.location.validated`]: rhValidation.locationValidation,
+                [`personalInfo.location.causeNonValidation`]: rhValidation.locationCause,
+                [`personalInfo.nationality.validated`]: rhValidation.nationalityValidation,
+                [`personalInfo.nationality.causeNonValidation`]: rhValidation.nationalityCause,
+                [`personalInfo.socialSecurityNumber.validated`]: rhValidation.socialSecurityNumberValidation,
+                [`personalInfo.socialSecurityNumber.causeNonValidation`]: rhValidation.socialSecurityNumberCause,
+                [`personalInfo.identificationDocument.validated`]: rhValidation.identificationDocumentValidation,
+                [`personalInfo.identificationDocument.causeNonValidation`]: rhValidation.identificationDocumentCause,
+                [`personalInfo.rib.validated`]: rhValidation.ribValidation,
+                [`personalInfo.rib.causeNonValidation`]: rhValidation.ribCause,
+                [`personalInfo.ribDocument.validated`]: rhValidation.ribDocumentValidation,
+                [`personalInfo.ribDocument.causeNonValidation`]: rhValidation.ribDocumentCause,
+                [`personalInfo.carInfo.drivingLicense.validated`]: rhValidation.drivingLicenseValidation,
+                [`personalInfo.carInfo.drivingLicense.causeNonValidation`]: rhValidation.drivingLicenseCause,
+                [`personalInfo.carInfo.carRegistration.validated`]: rhValidation.carRegistrationValidation,
+                [`personalInfo.carInfo.carRegistration.causeNonValidation`]: rhValidation.carRegistrationCause,
+                [`clientInfo.company.validated`]: rhValidation.companyValidation,
+                [`clientInfo.company.causeNonValidation`]: rhValidation.companyCause,
+                [`clientInfo.clientContact.firstName.validated`]: rhValidation.clientfirstNameValidation,
+                [`clientInfo.clientContact.firstName.causeNonValidation`]: rhValidation.clientfirstNameCause,
+                [`clientInfo.clientContact.lastName.validated`]: rhValidation.clientlastNameValidation,
+                [`clientInfo.clientContact.lastName.causeNonValidation`]: rhValidation.clientlastNameCause,
+                [`clientInfo.clientContact.position.validated`]: rhValidation.clientPostionValidation,
+                [`clientInfo.clientContact.position.causeNonValidation`]: rhValidation.clientPositionCause,
+                [`clientInfo.clientContact.email.validated`]: rhValidation.clientEmailValidation,
+                [`clientInfo.clientContact.email.causeNonValidation`]: rhValidation.clientEmailCause,
+                [`clientInfo.clientContact.phoneNumber.validated`]: rhValidation.clientphoneNumberValidation,
+                [`clientInfo.clientContact.phoneNumber.causeNonValidation`]: rhValidation.clientphoneNumberCause,
+                [`missionInfo.profession.validated`]: rhValidation.professionvalidation,
+                [`missionInfo.profession.causeNonValidation`]: rhValidation.professionCause,
+                [`missionInfo.industrySector.validated`]: rhValidation.industrySectorValidated,
+                [`missionInfo.industrySector.causeNonValidation`]: rhValidation.industrySectorCause,
+                [`personalInfo.portage.validated`]: rhValidation.portageValidated,
+                [`personalInfo.portage.causeNonValidation`]: rhValidation.portageCause,
+                [`missionInfo.finalClient.validated`]: rhValidation.finalClientValidation,
+                [`missionInfo.finalClient.causeNonValidation`]: rhValidation.finalClientCause,
+                [`missionInfo.dailyRate.validated`]: rhValidation.dailyRateValidation,
+                [`missionInfo.dailyRate.causeNonValidation`]: rhValidation.dailyRateCause,
+                [`missionInfo.startDate.validated`]: rhValidation.startDateValidation,
+                [`missionInfo.startDate.causeNonValidation`]: rhValidation.startDateCause,
+                [`missionInfo.endDate.validated`]: rhValidation.endDateValidation,
+                [`missionInfo.endDate.causeNonValidation`]: rhValidation.endDateCause,
+                [`missionInfo.isSimulationValidated.validated`]: rhValidation.simulationValidation,
+                [`missionInfo.isSimulationValidated.causeNonValidation`]: rhValidation.simulationCause,
+                [`status`]: validated,
+            },
+            { new: true }
+        );
+
+
+
+
+        if (!updatedPreRegistration) {
+            return res.status(404).json({ error: "preregister not found" });
+        }
+
+        return res.json(updatedPreRegistration);
+    } catch (error) {
+        return res.status(500).json({ error: error });
+    }
 
 }
 
@@ -348,7 +348,7 @@ exports.getPendingPreRegistrations = async (req, res) => {
     }
 };
 
-exports.consultantEdit = async (req, res)=>{
+exports.consultantEdit = async (req, res) => {
     const token = req.headers.authorization;
     if (!token) {
         return res.status(401).json({ message: 'Token non fourni' });
@@ -356,8 +356,8 @@ exports.consultantEdit = async (req, res)=>{
     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
     const role = decoded.role
 
-    if (role !== "CONSULTANT"){
-        return res.status(403).send({error : "Unauthorized"})
+    if (role !== "CONSULTANT") {
+        return res.status(403).send({ error: "Unauthorized" })
     }
     try {
         const rhValidation = req.body
@@ -486,8 +486,8 @@ exports.consultantEdit = async (req, res)=>{
 
 
         return res.json(updatedPreRegistration);
-    }catch (error) {
-        return res.status(500).json({ error: error});
+    } catch (error) {
+        return res.status(500).json({ error: error });
     }
 
 }
@@ -497,16 +497,16 @@ exports.killPreregister = async (req, res) => {
     try {
         const preregisterId = req.params.preregisterId;
         await PreRegistration.findOneAndUpdate(
-            {_id: preregisterId},
-            {'missionInfo.missionKilled': true},
-            {new: true})
+            { _id: preregisterId },
+            { 'missionInfo.missionKilled': true },
+            { new: true })
             .then(preregistration => {
                 return res.status(200).send(preregistration)
             }).catch(error => {
-                return res.status(500).send({error : "Server Error"})
+                return res.status(500).send({ error: "Server Error" })
             })
-    }catch (e) {
-        return res.status(500).send({error : "Server Error"})
+    } catch (e) {
+        return res.status(500).send({ error: "Server Error" })
     }
 
 
@@ -514,10 +514,10 @@ exports.killPreregister = async (req, res) => {
 
 exports.getPending = async (req, res) => {
     try {
-        const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['PENDING'] } });
-        if (pendingPreRegistrations.length === 0){
+        const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['PENDING', 'NOTVALIDATED'] } });
+        if (pendingPreRegistrations.length === 0) {
             return res.status(404).json("There are not pending preregisters");
-        }else{
+        } else {
             return res.json(pendingPreRegistrations);
         }
     } catch (error) {
@@ -529,9 +529,9 @@ exports.getPending = async (req, res) => {
 exports.getValidated = async (req, res) => {
     try {
         const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['VALIDATED'] } });
-        if (pendingPreRegistrations.length === 0){
+        if (pendingPreRegistrations.length === 0) {
             return res.status(404).json("There are not validated preregisters");
-        }else{
+        } else {
             return res.json(pendingPreRegistrations);
         }
     } catch (error) {
@@ -542,9 +542,9 @@ exports.getValidated = async (req, res) => {
 exports.getNotValidated = async (req, res) => {
     try {
         const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['NOTVALIDATED'] } });
-        if (pendingPreRegistrations.length === 0){
+        if (pendingPreRegistrations.length === 0) {
             return res.status(404).json("There are not not validated preregisters");
-        }else{
+        } else {
             return res.json(pendingPreRegistrations);
         }
     } catch (error) {

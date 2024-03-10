@@ -3,6 +3,10 @@ const upload = require("../middlewares/uploadMiddleware");
 
 const router = express.Router();
 const { register,
+        craInformation,
+        resetPassword,
+        sendForgotPasswordMail,
+        sendemailtoconsultant,
         login,
         createUserByAdmin,
         getMissionsByUserId,
@@ -24,9 +28,13 @@ const { register,
         updateUserByAdmin,
         updateAccountVisibility,
         addPDFtoUser,
-        getAllCras} = require('../controllers/userController');
+        getAllCras } = require('../controllers/userController');
 
 
+router.post('/resetPassword/:user_id', resetPassword)
+router.post('/sendForgotPasswordMail', sendForgotPasswordMail)
+router.post('/sendemailtoconsultant', sendemailtoconsultant)
+router.get('/craInformation/', craInformation)
 router.post('/register/', register);
 router.post('/login/', login);
 router.post('/createByAdmin/', createUserByAdmin);
@@ -45,29 +53,29 @@ router.get('/getPreregisterByUserId/:userId', getPreregisterByUserId);
 router.get('/getAllcras/:userId', getAllCras);
 
 router.get('/getAllDacuments/:userId', getAllDocuments);
-router.put('/addDocumentToUser/:userId',upload.fields([
+router.put('/addDocumentToUser/:userId', upload.fields([
         { name: 'userDocument', maxCount: 1 },
-]) ,addDocumentToUser)
+]), addDocumentToUser)
 router.put('/updateUserByAdmin/:userId', updateUserByAdmin);
 router.put('/updateAccountVisibility/:userId', updateAccountVisibility);
-router.put('/updateCra/:missionId',upload.fields([
+router.put('/updateCra/:missionId', upload.fields([
         { name: 'signature', maxCount: 1 },
-]) ,updateCraInformations)
+]), updateCraInformations)
 
 router.get('/getCraInformations/:missionId', getCraInformations)
 
-router.put('/editIdentificationDocument/:userId',upload.fields([
+router.put('/editIdentificationDocument/:userId', upload.fields([
         { name: 'identificationDocument', maxCount: 1 },
-]) ,editIdentificationDocument)
+]), editIdentificationDocument)
 
-router.put('/addCraPdfToUser/:missionId',upload.fields([
+router.put('/addCraPdfToUser/:missionId', upload.fields([
         { name: 'craPdf', maxCount: 1 },
-]) ,addPDFtoUser)
+]), addPDFtoUser)
 
-router.put('/editDrivingLiscence/:userId',upload.fields([
+router.put('/editDrivingLiscence/:userId', upload.fields([
         { name: 'drivingLicense', maxCount: 1 },
-]) ,editDrivingLiscence)
-router.put('/editRibDocument/:userId',upload.fields([
+]), editDrivingLiscence)
+router.put('/editRibDocument/:userId', upload.fields([
         { name: 'ribDocument', maxCount: 1 },
-]) ,editRibDocument)
+]), editRibDocument)
 module.exports = router;

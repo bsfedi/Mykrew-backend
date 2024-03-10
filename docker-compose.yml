@@ -1,0 +1,15 @@
+version: "3.2"
+services:
+  express-app:
+    build: .
+    ports:
+      - "3600:3600"
+    depends_on:
+      - db
+  db:
+    image: mongo:latest
+    hostname: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data:/data/db
