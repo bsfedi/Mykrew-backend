@@ -10,6 +10,7 @@ const emailService = require('../services/emailService');
 
 const fs = require('fs').promises;
 const moment = require('moment');
+const { log } = require('console');
 
 
 exports.resetPassword = async (req, res) => {
@@ -192,17 +193,24 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const token = jwt.sign({ userId: user._id, role: user.role, preRegistration: user.preRegister }, serviceJWT.jwtSecret, {
-      expiresIn: serviceJWT.jwtExpiresIn,
-    });
+    if (user.isAvtivated) {
+      const token = jwt.sign({ userId: user._id, role: user.role, preRegistration: user.preRegister }, serviceJWT.jwtSecret, {
+        expiresIn: serviceJWT.jwtExpiresIn,
+      });
 
-    res.status(200).json({
-      message: 'Login successful',
-      token,
-      role: user.role,
-      id: user._id,
-      image: user.image
-    });
+      res.status(200).json({
+        message: 'Login successful',
+        token,
+        role: user.role,
+        id: user._id,
+        image: user.image
+      });
+    }
+    else {
+      return res.status(401).json({ message: 'Votre compte a été désactivé , veuillez contacter l’admin' });
+    }
+
+
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ message: 'Login failed' });
@@ -433,9 +441,11 @@ exports.getPersonnalInfoByUserId = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
-
-    const userPersonalInfo = user.personalInfo;
-
+    console.log(user);
+    const userPersonalInfo = {
+      ...user.personalInfo,
+      isAvtivated: user.isAvtivated
+    };
     const hasNonEmptyProperties = Object.values(userPersonalInfo)
       .some(value => typeof value === 'string' && value.trim() !== '');
 
