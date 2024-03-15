@@ -288,6 +288,7 @@ exports.getMissionsByUserId = async (req, res) => {
       _id: mission._id,
       contractProcess: mission.contractProcess,
       newMissionStatus: mission.newMissionStatus,
+      validated_by: mission.validated_by
     }));
 
 
@@ -313,6 +314,7 @@ exports.getMissionsByUserId = async (req, res) => {
       userId: mission.userId,
       contractProcess: mission.contractProcess,
       newMissionStatus: mission.newMissionStatus,
+      validated_by: mission.validated_by,
       __v: mission.__v,
     }));
 

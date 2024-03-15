@@ -6,10 +6,10 @@ const newMissionStatus = ['PENDING', 'VALIDATED', 'WAITINGCONTRACT', 'NOTVALIDAT
 
 const newMissionSchema = new mongoose.Schema({
 
-        userId: String,
+    userId: String,
 
     clientInfo: {
-        company:{
+        company: {
             value: String,
             validated: Boolean,
             causeNonValidation: String
@@ -42,67 +42,71 @@ const newMissionSchema = new mongoose.Schema({
                 causeNonValidation: String
             },
         }
+    },
+
+    missionInfo: {
+        profession: {
+            value: String,
+            validated: Boolean,
+            causeNonValidation: String
+        },
+        industrySector: {
+            value: String,
+            validated: Boolean,
+            causeNonValidation: String
+        },
+        finalClient: {
+            value: String,
+            validated: Boolean,
+            causeNonValidation: String
+        },
+        dailyRate: {
+            value: Number,
+            validated: Boolean,
+            causeNonValidation: String
+        },
+        startDate: {
+            value: Date,
+            validated: Boolean,
+            causeNonValidation: String
+        },
+        endDate: {
+            value: Date,
+            validated: Boolean,
+            causeNonValidation: String
+        },
+        isSimulationValidated: {
+            value: String,
+            validated: Boolean,
+            causeNonValidation: String
         },
 
-        missionInfo: {
-          profession: {
-              value: String,
-              validated: Boolean,
-              causeNonValidation:String
-              },
-          industrySector: {
-              value: String,
-              validated: Boolean,
-              causeNonValidation:String
-              },
-          finalClient: {
-              value: String,
-              validated: Boolean,
-              causeNonValidation:String
-              },
-          dailyRate: {
-              value: Number,
-              validated: Boolean,
-              causeNonValidation:String
-              },
-          startDate: {
-              value: Date,
-              validated: Boolean,
-              causeNonValidation:String
-              },
-          endDate: {
-                value: Date,
-                validated: Boolean,
-                causeNonValidation:String
-              },
-          isSimulationValidated: {
-                value: String,
-                validated: Boolean,
-                causeNonValidation:String
-              },
 
-
-        },
+    },
 
     missionKilled: {
         type: Boolean,
         default: false
     },
-        contractProcess: {
-            type: mongoose.Schema.Types.ObjectId,
-                ref: 'contractProcess'
-            },
-            newMissionStatus:{
-                type: String,
-                enum: newMissionStatus,
-                default: 'PENDING',
-            },
+    validated_by: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'users'
+    },
+    contractProcess: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'contractProcess'
+    },
+    newMissionStatus: {
+        type: String,
+        enum: newMissionStatus,
+        default: 'PENDING',
+    },
 
 
 
 
 
-    }
+}
 );
 
 

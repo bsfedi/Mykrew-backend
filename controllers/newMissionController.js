@@ -163,7 +163,8 @@ exports.RHvalidation = async (req, res) => {
     }
     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
     const role = decoded.role
-
+    validated_by = decoded.userId
+    console.log(validated_by)
     if (role === "CONSULTANT") {
         return res.status(403).send({ error: "Unauthorized" })
     }
@@ -184,13 +185,14 @@ exports.RHvalidation = async (req, res) => {
         const newMissionCo = await NewMission.findOneAndUpdate(
             { _id: missionId },
             {
+
                 contractProcess: savedContractProcess._id,
             },
             { new: true }
         );
 
     }
-    await NewMission.findOneAndUpdate(
+    await NewMission.updateOne(
         { _id: missionId },
         {
             [`clientInfo.company.validated`]: rhValidation.companyValidation,
@@ -222,6 +224,10 @@ exports.RHvalidation = async (req, res) => {
             [`missionInfo.isSimulationValidated.validated`]: rhValidation.simulationValidation,
             [`missionInfo.isSimulationValidated.causeNonValidation`]: rhValidation.simulationCause,
             [`newMissionStatus`]: validated,
+            [`validated_by`]: validated_by,
+
+
+
         },
         { new: true }
     ).then(async (newMission) => {

@@ -1,7 +1,7 @@
 const PreRegistration = require('../models/preRegistrationModel.js');
 const ContractProcess = require('../models/contractModel.js');
 const User = require('../models/userModel.js');
-const {getPreRegistrationByContractId,getUserByPreregister, getMissionByContractId} = require("../utils/utils");
+const { getPreRegistrationByContractId, getUserByPreregister, getMissionByContractId } = require("../utils/utils");
 const NewMission = require("../models/newMissionModel");
 
 
@@ -152,17 +152,17 @@ exports.validateContractValidation = async (req, res) => {
 
 
         await updatedContractProcess.save();
-        if (updatedContractProcess.statut == "VALIDATED"){
+        if (updatedContractProcess.statut == "VALIDATED") {
             getMissionByContractId(contractProcessId)
                 .then(async (mission) => {
-                    if (mission){
+                    if (mission) {
 
-                        await NewMission.findOneAndUpdate({_id: mission._id},
-                            {newMissionStatus: "VALIDATED"}).then(()=>{
-                            console.log("suceess")
-                        }).catch(error => {
-                            console.log("error while changing mission stauts")
-                        })
+                        await NewMission.findOneAndUpdate({ _id: mission._id },
+                            { newMissionStatus: "VALIDATED" }).then(() => {
+                                console.log("suceess")
+                            }).catch(error => {
+                                console.log("error while changing mission stauts")
+                            })
                         await User.findById(mission.userId)
                             .then(async (user) => {
                                 const missionData = {
@@ -190,7 +190,7 @@ exports.validateContractValidation = async (req, res) => {
 
                                 };
 
-                                await NewMission.findOneAndDelete({_id: mission._id}).then(deleted => {
+                                await NewMission.findOneAndDelete({ _id: mission._id }).then(deleted => {
                                     console.log(deleted)
                                 })
                                 try {
@@ -198,7 +198,7 @@ exports.validateContractValidation = async (req, res) => {
 
                                     await user.addMission(missionData);
                                 } catch (error) {
-                                    return res.status(500).json({error: 'An error occurred while updating the user.'});
+                                    return res.status(500).json({ error: 'An error occurred while updating the user.' });
                                 }
 
 
@@ -208,6 +208,10 @@ exports.validateContractValidation = async (req, res) => {
                         return res.status(200).json(updatedContractProcess);
                     }
                     else {
+                        const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
+                            { contractProcess: contractProcessId }, {
+                            [`status`]: "VALIDATED",
+                        })
 
                         getPreRegistrationByContractId(contractProcessId)
                             .then((preRegistration) => {
@@ -258,21 +262,21 @@ exports.validateContractValidation = async (req, res) => {
 
                                         try {
                                             const user = await User.findOneAndUpdate(
-                                                {preRegister: preRegistration.id},
+                                                { preRegister: preRegistration.id },
                                                 {}
                                             );
 
                                             await user.addMission(missionData);
                                             await user.addPersonalInfo(personalInfoData);
-                                        }catch (error){
+                                        } catch (error) {
                                             return res.status(500).json({ error: 'An error occurred while updating the user.' });
                                         }
 
 
                                     }).catch((error) => {
-                                    console.error('Error:', error.message);
-                                    return res.status(500).json({ error: 'An error occurred while updating the user.' });
-                                })
+                                        console.error('Error:', error.message);
+                                        return res.status(500).json({ error: 'An error occurred while updating the user.' });
+                                    })
                                 return res.status(200).json(preRegistration);
                             })
                             .catch((error) => {
@@ -288,13 +292,13 @@ exports.validateContractValidation = async (req, res) => {
                     console.error('Error:', error.message);
                     return res.status(500).json({ error: 'An error occurred while updating the user.' });
                 });
-        }else{
+        } else {
             return res.status(500).send("contract not validated");
         }
 
 
     } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while updating ContractProcess.'});
+        return res.status(500).json({ error: 'An error occurred while updating ContractProcess.' });
     }
 };
 

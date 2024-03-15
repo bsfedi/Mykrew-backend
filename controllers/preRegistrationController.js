@@ -245,7 +245,7 @@ exports.RHvalidation = async (req, res) => {
         if (isFalseValuePresent) {
             validated = "NOTVALIDATED"
         } else {
-            validated = "VALIDATED"
+            validated = "WAITINGCONTRACT"
 
             const newContractProcess = new ContractProcess();
             const savedContractProcess = await newContractProcess.save();
@@ -514,7 +514,7 @@ exports.killPreregister = async (req, res) => {
 
 exports.getPending = async (req, res) => {
     try {
-        const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['PENDING', 'NOTVALIDATED'] } });
+        const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['PENDING', 'NOTVALIDATED', 'WAITINGCONTRACT'] } });
         if (pendingPreRegistrations.length === 0) {
             return res.status(404).json("There are not pending preregisters");
         } else {
