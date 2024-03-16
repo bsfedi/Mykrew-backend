@@ -6,6 +6,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config()
+const axios = require('axios');
 const registrationRoutes = require("./routes/preRegistrationRoutes");
 const userRoutes = require("./routes/userRoutes");
 const contractRoutes = require("./routes/contractProcessRoutes");
@@ -63,12 +64,8 @@ const uploadFolder = './uploads';
 if (!fs.existsSync(uploadFolder)) {
     fs.mkdirSync(uploadFolder);
 }
-const corsOptions = {
-    origin: '*'
-};
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use(cors(corsOptions));
-
+app.use(cors());
 console.log('Starting your application...');
 
 const morgan = require('morgan');
@@ -86,6 +83,31 @@ io.on('connection', (socket) => {
     });
 });
 
+app.get('/api/download', async (req, res) => {
+    try {
+        const { url } = req.query; // Extract the 'url' query parameter from the request
+
+        if (!url) {
+            return res.status(400).send('URL parameter is missing');
+        }
+
+        // Download the file from the provided URL
+        const response = await axios.get(url, { responseType: 'stream' });
+
+        // Set appropriate content type based on the file extension
+        const contentType = url.endsWith('.pdf') ? 'application/pdf' : (url.endsWith('.jpg') || url.endsWith('.jpeg') ? 'image/jpeg' : 'application/octet-stream');
+
+        // Set response headers
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', 'attachment; filename="downloaded_file"'); // Adjust filename if needed
+
+        // Pipe the file stream to response
+        response.data.pipe(res);
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        res.status(500).send('Error downloading file');
+    }
+});
 
 app.use("/registration", registrationRoutes)
 app.use("/user", userRoutes)

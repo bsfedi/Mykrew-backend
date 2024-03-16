@@ -240,6 +240,9 @@ exports.createUserByAdmin = (req, res) => {
       [`personalInfo.immatriculation`]: immat,
       [`personalInfo.firstName`]: firstName,
       [`personalInfo.lastName`]: lastName,
+      ['personalInfo.phoneNumber']: '',
+      ['personalInfo.location']: '',
+
     });
 
     newUser.save();
@@ -329,34 +332,19 @@ exports.getMissionsByUserId = async (req, res) => {
 exports.getMissionByMissionId = async (req, res) => {
   try {
     const missionId = req.params.newMissionId;
-    await NewMission
-      .findById(missionId)
-      .then(async (newMission) => {
-        if (!newMission) {
-          await User.find({})
-            .then(users => {
+    const newMission = await NewMission.findById(missionId);
 
-              users.forEach(user => {
-                user.missions.forEach(mission => {
-
-                  if (mission._id == missionId) {
-                    return res.status(200).send(mission)
-                  }
-                });
-              });
-
-
-            })
-        } else {
-          return res.status(200).send(newMission);
+    if (!newMission) {
+      const users = await User.find({});
+      for (const user of users) {
+        const mission = user.missions.find(mission => mission._id == missionId);
+        if (mission) {
+          return res.status(200).send(mission);
         }
+      }
+    }
 
-
-      })
-      .catch((error) => {
-        return res.status(500).send({ error: error });
-      });
-
+    return res.status(200).send(newMission);
   } catch (error) {
     return res.status(500).json({ error: 'Une erreur s\'est produite lors de la récupération des missions.' });
   }
