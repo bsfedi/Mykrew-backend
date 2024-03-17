@@ -242,6 +242,8 @@ exports.createUserByAdmin = (req, res) => {
       [`personalInfo.lastName`]: lastName,
       ['personalInfo.phoneNumber']: '',
       ['personalInfo.location']: '',
+      ['personalInfo.email']: email,
+
 
     });
 
@@ -902,6 +904,85 @@ exports.updateAccountVisibility = async (req, res) => {
       res.status(500).json({ message: error.message });
     })
 }
+
+exports.updatedUser = async (req, res) => {
+  const userId = req.params.userId; // Assuming userId is passed in the URL parameters
+
+  try {
+    const updatedUserInfo = req.body; // Assuming the updated personalInfo is sent in the request body
+
+    // Find the user in the database
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update specific fields in personalInfo
+
+    user.personalInfo.firstName = updatedUserInfo.firstName;
+
+
+    user.personalInfo.lastName = updatedUserInfo.lastName;
+
+
+    user.personalInfo.email = updatedUserInfo.email;
+    user.personalInfo.phoneNumber = updatedUserInfo.phoneNumber;
+    user.personalInfo.nationality = updatedUserInfo.nationality;
+    user.personalInfo.location = updatedUserInfo.location;
+
+
+    // Update other fields as needed
+
+    // Save the updated user
+    const updatedUser = await user.save();
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
+exports.updatePassword = async (req, res) => {
+  const userId = req.params.userId; // Assuming userId is passed in the URL parameters
+  const oldPassword = req.body.password;
+  const newPassword = req.body.new_password;
+
+  try {
+    // Find the user in the database
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Ensure oldPassword is provided
+    if (!oldPassword) {
+      return res.status(400).json({ error: 'ancien mot de passe est requis' });
+    }
+
+    // Compare the old password with the hashed password stored in the database
+    const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isPasswordMatch) {
+      return res.status(400).json({ error: 'ancien mot de passe est incorrect' });
+    }
+
+    // Hash the new password before saving it
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password in the database
+    user.password = hashedNewPassword;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 exports.addPDFtoUser = async (req, res) => {
   try {

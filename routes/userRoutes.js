@@ -8,6 +8,7 @@ const { register,
         sendForgotPasswordMail,
         sendemailtoconsultant,
         login,
+        updatedUser,
         createUserByAdmin,
         getMissionsByUserId,
         getMissionByMissionId,
@@ -27,6 +28,7 @@ const { register,
         getRhUsers,
         updateUserByAdmin,
         updateAccountVisibility,
+        updatePassword,
         addPDFtoUser,
         getAllCras } = require('../controllers/userController');
 
@@ -37,6 +39,7 @@ router.post('/sendemailtoconsultant', sendemailtoconsultant)
 router.get('/craInformation/', craInformation)
 router.post('/register/', register);
 router.post('/login/', login);
+
 router.post('/createByAdmin/', createUserByAdmin);
 router.get('/getMissions/:userId', getMissionsByUserId);
 router.get('/getPersonnalInfoByUserId/:userId', getPersonnalInfoByUserId);
@@ -51,7 +54,8 @@ router.get('/getConsultantusers', getConsultantUsers);
 router.get('/getPreregisterByUserId/:userId', getPreregisterByUserId);
 
 router.get('/getAllcras/:userId', getAllCras);
-
+router.put('/updateuser/:userId', updatedUser)
+router.put('/updatepassword/:userId', updatePassword)
 router.get('/getAllDacuments/:userId', getAllDocuments);
 router.put('/addDocumentToUser/:userId', upload.fields([
         { name: 'userDocument', maxCount: 1 },
