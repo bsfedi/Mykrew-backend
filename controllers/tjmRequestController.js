@@ -35,7 +35,7 @@ exports.createDemandeModifTjm = async (req, res) => {
 
                 })
                 await notification.save().then(notification => {
-                    socketModule.getIO().emit("rhNotification", {notification: notification})
+                    socketModule.getIO().emit("rhNotification", { notification: notification })
                 })
                     .catch(error => {
                         console.log(error)
@@ -43,7 +43,7 @@ exports.createDemandeModifTjm = async (req, res) => {
                 return res.status(200).send(tjmrequest)
             }
         }).catch(error => {
-            return res.status(500).send({error: error})
+            return res.status(500).send({ error: error })
         })
 
 }
@@ -87,12 +87,12 @@ exports.RhTjmValidation = async (req, res) => {
         }
 
 
-            const notification = new Notification({
-                userId: tjmRequest.userId,
-                typeOfNotification: "TJMREQUESTRESPONSEVALIDATED",
-                toWho: "CONSULTANT",
-                tjmRequestId: tjmRequest._id,
-            });
+        const notification = new Notification({
+            userId: tjmRequest.userId,
+            typeOfNotification: "TJMREQUESTRESPONSEVALIDATED",
+            toWho: "CONSULTANT",
+            tjmRequestId: tjmRequest._id,
+        });
 
 
 
@@ -123,14 +123,14 @@ exports.getMyTjmRequest = async (req, res) => {
 
     const userId = req.params.userId
 
-    await TjmRequest.find({userId: userId}).then(requests => {
-        if (requests){
+    await TjmRequest.find({ userId: userId }).then(requests => {
+        if (requests) {
             return res.status(200).send(requests)
-        }else{
+        } else {
             return res.status(404).send("il y a pas de requetes")
         }
     }).catch(error => {
-        return res.status(500).send({error:error})
+        return res.status(500).send({ error: error })
     })
 }
 
@@ -143,7 +143,7 @@ exports.getAllTjmRequest = async (req, res) => {
             const users = await User.find({ _id: { $in: requests.map(request => request.userId) } });
 
             const userIdToUsernameMap = users.reduce((acc, user) => {
-                acc[user._id] = user.personalInfo.firstName +" "+ user.personalInfo.lastName ;
+                acc[user._id] = user.personalInfo.firstName + " " + user.personalInfo.lastName;
                 return acc;
             }, {});
 
@@ -165,20 +165,20 @@ exports.getAllTjmRequest = async (req, res) => {
 };
 
 
-exports.getTjmRequestsByMissionId = async (req,res) => {
-    try{
+exports.getTjmRequestsByMissionId = async (req, res) => {
+    try {
         const missionId = req.params.missionId
 
-        await TjmRequest.findOne({missionId: missionId}).then(request => {
-            if (!request){
+        await TjmRequest.findOne({ _id: missionId }).then(request => {
+            if (!request) {
                 return res.status(404).send("tjm request not found")
-            }else{
+            } else {
                 return res.status(200).send(request)
             }
         }).catch(error => {
             return res.status(500).send(error)
         })
-    }catch (e) {
+    } catch (e) {
         return res.status(500).send("server error")
     }
 }
@@ -212,7 +212,7 @@ exports.getTjmStats = async (req, res) => {
         preregisters.forEach(preregister => {
             if (preregister.status === 'PENDING') {
                 preregistersNonTraites++;
-            }else if(preregister.status !== 'NOTEXIST' || !preregister.status !== 'PENDING'){
+            } else if (preregister.status !== 'NOTEXIST' || !preregister.status !== 'PENDING') {
                 preregistersTraites++;
             }
 
