@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 mongoose.set("strictQuery", false);
 
 
-const types = ["NEWPREREGISTER","NEWMISSION",'PREREGISTERKILLED','MISSIONKILLED','MISSIONNOTVALID','MISSIONVALID','TJMREQUEST', 'TJMREQUESTRESPONSENOTVALIDATED', "TJMREQUESTRESPONSEVALIDATED", 'VIREMENT'];
-const toWho = ['CONSULTANT','RH'];
+const types = ["NEWPREREGISTER", "NEWMISSION", 'PREREGISTERKILLED', 'MISSIONKILLED', 'MISSIONNOTVALID', 'MISSIONVALID', 'TJMREQUEST', 'TJMREQUESTRESPONSENOTVALIDATED', "TJMREQUESTRESPONSEVALIDATED", 'VIREMENT'];
+const toWho = ['CONSULTANT', 'RH'];
 
 const notificationSchema = new mongoose.Schema({
     userId: {
@@ -13,30 +13,33 @@ const notificationSchema = new mongoose.Schema({
         type: String,
         enum: types,
     },
-    toWho:{
+    toWho: {
         type: String,
         enum: toWho
     },
-    preregisterId:{
+    preregisterId: {
         type: String,
     },
-    tjmRequestId:{
+    tjmRequestId: {
         type: String,
     },
-    missionId:{
+    missionId: {
         type: String,
     },
-    virementId:{
+    virementId: {
         type: String,
     },
-    note:{
+    note: {
         type: String,
     },
     createdAt: {
         type: Date,
         default: Date.now,
-    }
-
+    },
+    isSeen: {
+        type: Boolean,
+        default: false  // Assuming notifications start as unseen
+    },
 
 
 });
