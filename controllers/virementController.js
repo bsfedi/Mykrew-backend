@@ -25,7 +25,7 @@ exports.createVirement = async (req, res) => {
 
             })
             await notification.save().then(notification => {
-                socketModule.getIO().emit("rhNotification", {notification: notification})
+                socketModule.getIO().emit("rhNotification", { notification: notification })
             })
                 .catch(error => {
                     console.log(error)
@@ -34,7 +34,7 @@ exports.createVirement = async (req, res) => {
             return res.status(200).send(virement)
         })
         .catch(error => {
-            return res.status(500).send({error: error})
+            return res.status(500).send({ error: error })
         })
 }
 
@@ -87,112 +87,83 @@ exports.getVirementsByUserId = async (req, res) => {
     }
 };
 
+
+
 exports.getVirementsByPeriode = async (req, res) => {
     const periode = req.query.periode;
     const userId = req.params.userId;
     const typevirement = req.query.typevirement;
-    let startDate;
+
+    console.log("periode:", periode); // Check if periode is correctly received
+
+    let startDate, endDate;
 
     if (!periode && !typevirement) {
         try {
             const allVirements = await Virement.find({ userId: userId });
             return res.status(200).json(allVirements);
         } catch (error) {
-            console.error(`Erreur lors de la récupération de tous les virements :`, error);
-            return res.status(500).json({ message: 'Erreur interne du serveur' });
+            console.error(`Error retrieving all virements:`, error);
+            return res.status(500).json({ message: 'Internal Server Error' });
         }
     }
 
-    if (!typevirement && periode){
+    if (periode) {
         switch (periode) {
             case 'today':
                 startDate = moment().startOf('day');
-
+                endDate = moment().endOf('day');
                 break;
             case '7days':
-                startDate = moment().subtract(7, 'days');
+                startDate = moment().subtract(6, 'days').startOf('day');
+                endDate = moment().endOf('day');
                 break;
             case 'month':
-                startDate = moment().subtract(1, 'months');
+                startDate = moment().startOf('month');
+                endDate = moment().endOf('month');
                 break;
             case 'year':
-                startDate = moment().subtract(1, 'years');
-
+                startDate = moment().startOf('year');
+                endDate = moment().endOf('year');
                 break;
             default:
-                return res.status(400).json({ message: 'Période non prise en charge' });
-        }
-
-        try {
-            const virements = await Virement.find({
-                createdAt: { $gte: startDate.toDate() },
-                userId: userId,
-            })
-
-            return res.status(200).json(virements);
-        } catch (error) {
-            console.error(`Erreur lors de la récupération des virements pour la période spécifiée :`, error);
-            return res.status(500).json({ message: 'Erreur interne du serveur' });
+                return res.status(400).json({ message: 'Unsupported period' });
         }
     }
 
-    if (!periode && typevirement){
-
-        try {
-            const virements = await Virement.find({
-                typeVirement: typevirement ,
-                userId: userId,
-            });
-
-            if (!virements || virements.length === 0) {
-                return res.status(200).json({ message: `Aucun virement trouvé pour la période spécifiée` });
-            }
-
-            return res.status(200).json(virements);
-        } catch (error) {
-            console.error(`Erreur lors de la récupération des virements pour la période spécifiée :`, error);
-            return res.status(500).json({ message: 'Erreur interne du serveur' });
-        }
-    }
-
-
-    switch (periode) {
-        case 'today':
-            startDate = moment().startOf('day');
-            break;
-        case '7days':
-            startDate = moment().subtract(7, 'days');
-            break;
-        case 'month':
-            startDate = moment().subtract(1, 'months');
-            break;
-        case 'year':
-            startDate = moment().subtract(1, 'years');
-            break;
-        default:
-            return res.status(400).json({ message: 'Période non prise en charge' });
-    }
+    console.log("startDate:", startDate.format()); // Check the start date
+    console.log("endDate:", endDate.format()); // Check the end date
 
     try {
-        const virements = await Virement.find({
-            createdAt: { $gte: startDate.toDate() },
-            typeVirement: typevirement,
-            userId: userId,
-        });
+        let query = { userId: userId };
+
+        if (periode) {
+            query.createdAt = {
+                $gte: startDate.utc().startOf('day').toDate(),
+                $lte: endDate.utc().endOf('day').toDate()
+            };
+        }
+
+        if (typevirement) {
+            query.typeVirement = typevirement;
+        }
+
+        console.log("Query:", query); // Check the constructed query
+
+        const virements = await Virement.find(query);
 
         if (!virements || virements.length === 0) {
-            return res.status(200).json({ message: `Aucun virement trouvé` });
+            return res.status(200).json({ message: 'No virements found' });
         }
 
         return res.status(200).json(virements);
     } catch (error) {
-        console.error(`Erreur lors de la récupération des virements pour la période spécifiée :`, error);
-        return res.status(500).json({ message: 'Erreur interne du serveur' });
+        console.error(`Error retrieving virements:`, error);
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
-
-
-
 };
+
+
 
 exports.getVirementsStatsByYear = async (req, res) => {
     const year = req.params.year;
