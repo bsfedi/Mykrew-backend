@@ -153,7 +153,7 @@ exports.getVirementsByPeriode = async (req, res) => {
         const virements = await Virement.find(query);
 
         if (!virements || virements.length === 0) {
-            return res.status(200).json({ message: 'No virements found' });
+            return res.status(400).json({ message: 'No virements found' });
         }
 
         return res.status(200).json(virements);
