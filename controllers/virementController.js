@@ -143,8 +143,11 @@ exports.getVirementsByPeriode = async (req, res) => {
                 $lte: endDate.utc().endOf('day').toDate()
             };
         }
+        if (typevirement === 'all') {
+            const virements = await Virement.find(query);
+        }
+        if (typevirement != 'all') {
 
-        if (typevirement) {
             query.typeVirement = typevirement;
         }
 

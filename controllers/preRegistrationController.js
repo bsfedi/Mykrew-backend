@@ -7,7 +7,7 @@ const emailService = require('../services/emailService');
 const emailTemplates = require('../services/emailTemplates/emailTemplates');
 const { checkEmptyFields } = require("../utils/utils");
 const socketModule = require('../configuration/socketConfig');
-
+const User = require('../models/userModel');
 
 exports.createPreRegistration1 = async (req, res) => {
     try {
@@ -16,6 +16,8 @@ exports.createPreRegistration1 = async (req, res) => {
             return res.status(401).json({ message: 'Token non fourni' });
         }
         const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+        const user = await User.findById(decoded.userId);
+
         const register = decoded.preRegistration
         const personalInfo = req.body;
         const updatedPreRegistration = await PreRegistration.findOneAndUpdate(
@@ -23,7 +25,7 @@ exports.createPreRegistration1 = async (req, res) => {
             {
                 [`personalInfo.firstName.value`]: personalInfo.firstName,
                 [`personalInfo.lastName.value`]: personalInfo.lastName,
-                [`personalInfo.email.value`]: personalInfo.email,
+                [`personalInfo.email.value`]: user.email,
                 [`personalInfo.phoneNumber.value`]: personalInfo.phoneNumber,
                 [`personalInfo.portage.value`]: personalInfo.portage,
                 [`personalInfo.dateOfBirth.value`]: personalInfo.dateOfBirth,
@@ -35,7 +37,7 @@ exports.createPreRegistration1 = async (req, res) => {
         const emailSubject = 'PreRegister Created';
         const emailHTML = emailTemplates.preregisterTemplate;
 
-        emailService.sendEmail(personalInfo.email, emailSubject, emailHTML)
+        emailService.sendEmail(user.email, emailSubject, emailHTML)
             .then((success) => {
                 if (success) {
                     console.log('Email sent successfully.');

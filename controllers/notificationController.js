@@ -4,7 +4,7 @@ exports.getAllMyNotificationsConsultant = async (req, res) => {
 
     const userId = req.params.userId
 
-    await Notification.find({ userId: userId, toWho: 'CONSULTANT' }).
+    await Notification.find({ userId: userId, toWho: 'CONSULTANT' }).sort({ createdAt: -1 }).
         then(notifications => {
             if (notifications.length === 0) {
                 return res.status(404).send({ error: "Notifications not found" })
