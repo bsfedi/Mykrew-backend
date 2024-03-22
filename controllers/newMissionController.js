@@ -676,6 +676,37 @@ exports.getPendingMissions = async (req, res) => {
         return res.status(500).json({ error: 'An error occurred while fetching pending PreRegistrations.' });
     }
 };
+exports.getAllPendingMissions = async (req, res) => {
+    try {
+        const token = req.headers.authorization;
+        // if (!token) {
+        //     return res.status(401).json({ message: 'Token non fourni' });
+        // }
+
+        const pendingMissions = await NewMission.find({ newMissionStatus: { $in: ['PENDING', 'WAITINGCONTRACT'] } });
+
+        const updatedMissions = await Promise.all(pendingMissions.map(async mission => {
+            try {
+                console.log(mission.userId)
+                const user = await User.findOne({ _id: mission.userId });
+                console.log(user)
+                if (user) {
+                    mission['userId'] = user.personalInfo.firstName + ' ' + user.personalInfo.lastName
+                } else {
+                    mission['userId'] = ''; // Replace with empty string if user not found
+                }
+            } catch (error) {
+                console.error("Error finding user:", error);
+                mission.userId = ''; // Replace with empty string if error finding user
+            }
+            return mission;
+        }));
+
+        return res.status(200).json(updatedMissions);
+    } catch (error) {
+        return res.status(500).json({ error: 'An error occurred while fetching pending PreRegistrations.' });
+    }
+};
 
 exports.getValidatedMissions = async (req, res) => {
     const token = req.headers.authorization;

@@ -183,7 +183,24 @@ exports.getTjmRequestsByMissionId = async (req, res) => {
     }
 }
 
+exports.getallTjmRequestsByMissionId = async (req, res) => {
+    try {
+        const missionId = req.params.missionId;
 
+        await TjmRequest.find({ missionId: missionId }).then(requests => {
+            console.log(requests)
+            if (!requests || requests.length === 0) {
+                return res.status(404).send("No TJM requests found for the provided mission ID");
+            } else {
+                return res.status(200).send(requests);
+            }
+        }).catch(error => {
+            return res.status(500).send(error);
+        });
+    } catch (e) {
+        return res.status(500).send("Server error");
+    }
+};
 exports.getTjmStats = async (req, res) => {
     try {
         const tjms = await TjmRequest.find();

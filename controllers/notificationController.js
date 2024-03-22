@@ -1,5 +1,6 @@
 const Notification = require("../models/notificationModel")
 const User = require('../models/userModel');
+
 exports.getAllMyNotificationsConsultant = async (req, res) => {
 
     const userId = req.params.userId
@@ -39,6 +40,36 @@ exports.getMy5LastNotificationsConsultant = async (req, res) => {
 exports.getRhNotifications = async (req, res) => {
     try {
         const notifications = await Notification.find({ toWho: 'RH' }).sort({ createdAt: -1 });
+
+        if (notifications.length === 0) {
+            return res.status(404).send({ error: 'Notification not found!' });
+        } else {
+            const updatedNotifications = await Promise.all(notifications.map(async notification => {
+
+                try {
+                    const user = await User.findOne({ _id: notification.userId });
+                    if (user) {
+                        notification['userId'] = `${user.personalInfo.firstName} ${user.personalInfo.lastName}`;
+                    } else {
+                        notification['userId'] = ''; // Replace with empty string if user not found
+                    }
+                } catch (error) {
+                    console.error("Error finding user:", error);
+                    notification['userId'] = ''; // Replace with empty string if error finding user
+                }
+                return notification;
+            }));
+
+            return res.status(200).send(updatedNotifications);
+        }
+    } catch (error) {
+        return res.status(500).send({ error: error.message });
+    }
+};
+
+exports.getRhNotificationsnotseen = async (req, res) => {
+    try {
+        const notifications = await Notification.find({ toWho: 'RH', isSeen: false }).sort({ createdAt: -1 });
 
         if (notifications.length === 0) {
             return res.status(404).send({ error: 'Notification not found!' });
