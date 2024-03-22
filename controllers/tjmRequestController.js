@@ -18,6 +18,7 @@ exports.createDemandeModifTjm = async (req, res) => {
     const tjmRequest = new TjmRequest({
         userId: tjmData.userId,
         missionId: tjmData.missionId,
+        datecompte: tjmData.datecompte,
         status: "PENDING",
         valueOfNewTjm: tjmData.valueOfNewTjm,
         simulationValidated: isSimulationValidatedFilename
@@ -188,7 +189,7 @@ exports.getallTjmRequestsByMissionId = async (req, res) => {
         const missionId = req.params.missionId;
 
         await TjmRequest.find({ missionId: missionId }).then(requests => {
-            console.log(requests)
+
             if (!requests || requests.length === 0) {
                 return res.status(404).send("No TJM requests found for the provided mission ID");
             } else {

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 mongoose.set("strictQuery", false);
 
-const status = ["PENDING","VALIDATED",'NOTVALIDATED'];
+const status = ["PENDING", "VALIDATED", 'NOTVALIDATED'];
 
 
 
@@ -9,10 +9,10 @@ const tjmRequestSchema = new mongoose.Schema({
     userId: {
         type: String,
     },
-    missionId:{
+    missionId: {
         type: String,
     },
-    status:{
+    status: {
         type: String,
         enum: status
     },
@@ -23,7 +23,11 @@ const tjmRequestSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    simulationValidated:{
+    datecompte: {
+        type: Date,
+    },
+
+    simulationValidated: {
         type: String,
     },
 
