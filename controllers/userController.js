@@ -627,14 +627,11 @@ exports.editRibDocument = async (req, res) => {
 exports.getMonthlyStatsForAllUsers = async (req, res) => {
   try {
     const allUsers = await User.find();
-
-    const yearlyData = Array(12).fill(0);
-
+    const yearlyData = Array(13).fill(0); // Changed array length to accommodate the last month of the previous year
     const currentYear = new Date().getFullYear();
 
     for (const user of allUsers) {
       const userMissions = [...user.missions];
-
       const newMissions = await NewMission.find({ userId: user._id });
       userMissions.push(...newMissions);
 
@@ -649,18 +646,21 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
           const endMonth = endDate.getMonth();
           const tjm = mission.missionInfo.dailyRate || 0;
 
-          if (startYear === currentYear || endYear === currentYear) {
+          // Include the last month of the previous year
+          if ((startYear === currentYear - 1 && startMonth === 11) || (startYear === currentYear || endYear === currentYear)) {
             for (let i = startMonth; i <= endMonth; i++) {
-              yearlyData[i] += tjm * 20;
+              const yearIndex = startYear === currentYear - 1 && startMonth === 11 ? 0 : i + 1;
+              yearlyData[yearIndex] += tjm * 20;
             }
           }
         }
       });
     }
 
-    const categories = Array.from({ length: 12 }, (_, i) => {
-      const month = i + 1;
-      return `${month}/${currentYear}`;
+    const lastMonthOfPreviousYear = `${12}/${currentYear - 1}`;
+    const categories = Array.from({ length: 13 }, (_, i) => {
+      const month = i === 0 ? lastMonthOfPreviousYear : `${i}/${currentYear}`;
+      return month;
     });
 
     const stats = {
