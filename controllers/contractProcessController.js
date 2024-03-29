@@ -176,7 +176,7 @@ exports.validateContractValidation = async (req, res) => {
                                         isSimulationValidated: mission.missionInfo.isSimulationValidated.value,
                                     },
                                     clientInfo: {
-                                        company: mission.clientInfo.company,
+                                        company: mission.clientInfo.company.value,
                                         clientContact: {
                                             firstName: mission.clientInfo.clientContact.firstName.value,
                                             lastName: mission.clientInfo.clientContact.lastName.value,

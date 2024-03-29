@@ -530,7 +530,7 @@ exports.getPending = async (req, res) => {
 
 exports.getValidated = async (req, res) => {
     try {
-        const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['VALIDATED'] } });
+        const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['VALIDATED'] } }).sort({ addedDate: -1 });
         if (pendingPreRegistrations.length === 0) {
             return res.status(404).json("There are not validated preregisters");
         } else {

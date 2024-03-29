@@ -1,6 +1,6 @@
 const Notification = require("../models/notificationModel")
 const User = require('../models/userModel');
-
+const PreRegistration = require('../models/preRegistrationModel');
 exports.getAllMyNotificationsConsultant = async (req, res) => {
 
     const userId = req.params.userId
@@ -47,12 +47,23 @@ exports.getRhNotifications = async (req, res) => {
             const updatedNotifications = await Promise.all(notifications.map(async notification => {
 
                 try {
-                    const user = await User.findOne({ _id: notification.userId });
-                    if (user) {
-                        notification['userId'] = `${user.personalInfo.firstName} ${user.personalInfo.lastName}`;
-                    } else {
-                        notification['userId'] = ''; // Replace with empty string if user not found
+                    if (notification.typeOfNotification == 'NEWPREREGISTER') {
+                        const preregister = await PreRegistration.findOne({ _id: notification.preregisterId });
+                        if (preregister) {
+                            notification['userId'] = `${preregister.personalInfo.firstName.value} ${preregister.personalInfo.firstName.value}`;
+                        } else {
+                            notification['userId'] = ''; // Replace with empty string if user not found
+                        }
                     }
+                    else {
+                        const user = await User.findOne({ _id: notification.userId });
+                        if (user) {
+                            notification['userId'] = `${user.personalInfo.firstName} ${user.personalInfo.lastName}`;
+                        } else {
+                            notification['userId'] = ''; // Replace with empty string if user not found
+                        }
+                    }
+
                 } catch (error) {
                     console.error("Error finding user:", error);
                     notification['userId'] = ''; // Replace with empty string if error finding user

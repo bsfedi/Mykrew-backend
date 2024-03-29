@@ -188,7 +188,7 @@ exports.getallTjmRequestsByMissionId = async (req, res) => {
     try {
         const missionId = req.params.missionId;
 
-        await TjmRequest.find({ missionId: missionId }).then(requests => {
+        await TjmRequest.find({ missionId: missionId }).sort({ createdAt: -1 }).then(requests => {
 
             if (!requests || requests.length === 0) {
                 return res.status(404).send("No TJM requests found for the provided mission ID");
