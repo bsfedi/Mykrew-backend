@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isArchived: {
+    type: Boolean,
+    default: true
+  },
   email: {
     type: String,
     required: true,

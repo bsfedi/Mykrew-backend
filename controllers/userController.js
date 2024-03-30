@@ -424,6 +424,29 @@ exports.getMissionsByJWT = async (req, res) => {
   res.status(200).json(allMissions);
 
 };
+exports.deleteaccount = async (req, res) => {
+  const userId = req.params.user_id;
+  console.log(userId)
+  try {
+    // Delete user
+    const userDeletionResult = await User.deleteOne({ _id: userId });
+    if (userDeletionResult.deletedCount === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // Delete corresponding preregistration
+    const preregisterDeletionResult = await Preregister.deleteOne({ userId: userId });
+    if (preregisterDeletionResult.deletedCount === 0) {
+      // Handle case where preregistration is not found but user is deleted
+      // You may want to log this as it might indicate a data inconsistency
+    }
+
+    return res.status(200).json('The consultant has been successfully deleted.');
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    return res.status(500).json({ error: 'An error occurred while deleting the account.' });
+  }
+}
 
 exports.getPersonnalInfoByUserId = async (req, res) => {
   try {
@@ -593,6 +616,8 @@ exports.editDrivingLiscence = async (req, res) => {
     return res.status(500).send({ error: error })
   })
 }
+
+
 
 exports.editRibDocument = async (req, res) => {
   const userId = req.params.userId;
@@ -903,6 +928,55 @@ exports.updateAccountVisibility = async (req, res) => {
     }).catch(error => {
       res.status(500).json({ message: error.message });
     })
+}
+
+exports.updateconsultantstauts = async (req, res) => {
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).json({ message: 'Token non fourni' });
+  }
+  try {
+    const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+    if (decoded.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Accès non autorisé' });
+    }
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(301).json({ message: 'Token expiré' });
+    }
+    return res.status(500).json({ message: 'Erreur lors de la vérification du token' });
+  }
+
+  const isArchived = req.body.isArchived;
+  const userId = req.params.userId;
+
+  await User.findOneAndUpdate({ _id: userId },
+    { isArchived: isArchived },
+    { new: true }).then(updatedUser => {
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      }
+      return res.status(200).json(updatedUser);
+    }).catch(error => {
+      res.status(500).json({ message: error.message });
+    })
+}
+
+exports.getARchivedconsultant = async (req, res) => {
+  try {
+    await User.find({ isArchived: true }).then(users => {
+      if (users.length === 0) {
+        return res.status(404).send("users not found !")
+
+      } else {
+        return res.status(200).send(users)
+      }
+
+    })
+  } catch (e) {
+    return res.status(500).send("server error")
+
+  }
 }
 
 exports.updatedUser = async (req, res) => {
