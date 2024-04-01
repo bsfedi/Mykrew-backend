@@ -530,7 +530,7 @@ exports.getPending = async (req, res) => {
 
 exports.getValidated = async (req, res) => {
     try {
-        const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['VALIDATED'] } }).sort({ addedDate: -1 });
+        const pendingPreRegistrations = await PreRegistration.find({ status: { $in: ['VALIDATED'] }, isArchived: false }).sort({ addedDate: -1 });
         if (pendingPreRegistrations.length === 0) {
             return res.status(404).json("There are not validated preregisters");
         } else {
@@ -540,6 +540,56 @@ exports.getValidated = async (req, res) => {
         return res.status(500).json({ error: 'An error occurred while fetching pending PreRegistrations.' });
     }
 };
+
+exports.updateconsultantstauts = async (req, res) => {
+    const token = req.headers.authorization;
+    if (!token) {
+        return res.status(401).json({ message: 'Token non fourni' });
+    }
+    try {
+        const decoded = jwt.verify(token, serviceJWT.jwtSecret);
+        if (decoded.role !== 'ADMIN') {
+            return res.status(403).json({ message: 'Accès non autorisé' });
+        }
+    } catch (err) {
+        if (err.name === 'TokenExpiredError') {
+            return res.status(301).json({ message: 'Token expiré' });
+        }
+        return res.status(500).json({ message: 'Erreur lors de la vérification du token' });
+    }
+
+    const isArchived = req.body.isArchived;
+    const preregister_id = req.params.preregister_id;
+
+    await PreRegistration.findOneAndUpdate({ _id: preregister_id },
+        { isArchived: isArchived },
+        { new: true }).then(updatedUser => {
+            if (!updatedUser) {
+                return res.status(404).json({ message: 'Utilisateur non trouvé' });
+            }
+            return res.status(200).json(updatedUser);
+        }).catch(error => {
+            res.status(500).json({ message: error.message });
+        })
+}
+
+exports.getARchived = async (req, res) => {
+    try {
+        await PreRegistration.find({ status: { $in: ['VALIDATED'] }, isArchived: true }).sort({ addedDate: -1 }).then(preregisters => {
+            if (preregisters.length === 0) {
+                return res.status(404).send("users not found !")
+
+            } else {
+                return res.status(200).send(preregisters)
+            }
+
+        })
+    } catch (e) {
+        console.log(e)
+        return res.status(500).send("server error")
+
+    }
+}
 
 exports.getNotValidated = async (req, res) => {
     try {

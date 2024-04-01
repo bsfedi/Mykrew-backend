@@ -930,54 +930,7 @@ exports.updateAccountVisibility = async (req, res) => {
     })
 }
 
-exports.updateconsultantstauts = async (req, res) => {
-  const token = req.headers.authorization;
-  if (!token) {
-    return res.status(401).json({ message: 'Token non fourni' });
-  }
-  try {
-    const decoded = jwt.verify(token, serviceJWT.jwtSecret);
-    if (decoded.role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Accès non autorisé' });
-    }
-  } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(301).json({ message: 'Token expiré' });
-    }
-    return res.status(500).json({ message: 'Erreur lors de la vérification du token' });
-  }
 
-  const isArchived = req.body.isArchived;
-  const userId = req.params.userId;
-
-  await User.findOneAndUpdate({ _id: userId },
-    { isArchived: isArchived },
-    { new: true }).then(updatedUser => {
-      if (!updatedUser) {
-        return res.status(404).json({ message: 'Utilisateur non trouvé' });
-      }
-      return res.status(200).json(updatedUser);
-    }).catch(error => {
-      res.status(500).json({ message: error.message });
-    })
-}
-
-exports.getARchivedconsultant = async (req, res) => {
-  try {
-    await User.find({ isArchived: true }).then(users => {
-      if (users.length === 0) {
-        return res.status(404).send("users not found !")
-
-      } else {
-        return res.status(200).send(users)
-      }
-
-    })
-  } catch (e) {
-    return res.status(500).send("server error")
-
-  }
-}
 
 exports.updatedUser = async (req, res) => {
   const userId = req.params.userId; // Assuming userId is passed in the URL parameters

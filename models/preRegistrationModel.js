@@ -5,7 +5,7 @@ mongoose.set("strictQuery", false);
 
 const preRegistartionSchema = mongoose.Schema({
 
-    userId:String,
+    userId: String,
     personalInfo: {
 
         portage: {
@@ -16,73 +16,73 @@ const preRegistartionSchema = mongoose.Schema({
         firstName: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String,
+            causeNonValidation: String,
         },
         lastName: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         email: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         phoneNumber: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         dateOfBirth: {
             value: Date,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         location: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         nationality: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         socialSecurityNumber: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         identificationDocument: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         rib: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         ribDocument: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         carInfo: {
             hasCar: {
                 value: Boolean,
                 validated: Boolean,
-                causeNonValidation:String
+                causeNonValidation: String
             },
             drivingLicense: {
                 value: String,
                 validated: Boolean,
-                causeNonValidation:String
+                causeNonValidation: String
             },
             carRegistration: {
                 value: String,
                 validated: Boolean,
-                causeNonValidation:String
+                causeNonValidation: String
             },
         },
     },
@@ -90,33 +90,33 @@ const preRegistartionSchema = mongoose.Schema({
         company: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         clientContact: {
             firstName: {
                 value: String,
                 validated: Boolean,
-                causeNonValidation:String
+                causeNonValidation: String
             },
             lastName: {
                 value: String,
                 validated: Boolean,
-                causeNonValidation:String
+                causeNonValidation: String
             },
             position: {
                 value: String,
                 validated: Boolean,
-                causeNonValidation:String
+                causeNonValidation: String
             },
             email: {
                 value: String,
                 validated: Boolean,
-                causeNonValidation:String
+                causeNonValidation: String
             },
             phoneNumber: {
                 value: String,
                 validated: Boolean,
-                causeNonValidation:String
+                causeNonValidation: String
             },
         },
     },
@@ -126,37 +126,37 @@ const preRegistartionSchema = mongoose.Schema({
         profession: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         industrySector: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         finalClient: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         dailyRate: {
             value: Number,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         startDate: {
             value: Date,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         endDate: {
             value: Date,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         isSimulationValidated: {
             value: String,
             validated: Boolean,
-            causeNonValidation:String
+            causeNonValidation: String
         },
         missionKilled: {
             type: Boolean,
@@ -173,12 +173,16 @@ const preRegistartionSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['VALIDATED', 'PENDING', 'NOTVALIDATED','NOTEXIST', 'PENDINGTOKILL'],
+        enum: ['VALIDATED', 'PENDING', 'NOTVALIDATED', 'NOTEXIST', 'PENDINGTOKILL'],
         default: 'NOTEXIST',
     },
     contractProcess: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'contractProcess'
+    },
+    isArchived: {
+        type: Boolean,
+        default: false
     },
 
 });

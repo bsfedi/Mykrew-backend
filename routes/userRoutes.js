@@ -31,8 +31,6 @@ const { register,
         updatePassword,
         deleteaccount,
         addPDFtoUser,
-        updateconsultantstauts,
-        getARchivedconsultant,
         getAllCras } = require('../controllers/userController');
 
 
@@ -55,7 +53,7 @@ router.get('/getMonthlyStatsForAllUsers', getMonthlyStatsForAllUsers);
 router.get('/getConsultantStats', getConsultantStats);
 router.get('/getrhUsers', getRhUsers);
 router.get('/getConsultantusers', getConsultantUsers);
-router.get('/getARchivedconsultant', getARchivedconsultant);
+
 
 router.get('/getPreregisterByUserId/:userId', getPreregisterByUserId);
 
@@ -68,7 +66,7 @@ router.put('/addDocumentToUser/:userId', upload.fields([
 ]), addDocumentToUser)
 router.put('/updateUserByAdmin/:userId', updateUserByAdmin);
 router.put('/updateAccountVisibility/:userId', updateAccountVisibility);
-router.put('/updateconsultantstauts/:userId', updateconsultantstauts);
+
 
 router.put('/updateCra/:missionId', upload.fields([
         { name: 'signature', maxCount: 1 },
