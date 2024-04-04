@@ -652,8 +652,11 @@ exports.editRibDocument = async (req, res) => {
 exports.getMonthlyStatsForAllUsers = async (req, res) => {
   try {
     const allUsers = await User.find();
-    const yearlyData = Array(13).fill(0); // Changed array length to accommodate the last month of the previous year
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const currentYearMinusOne = currentYear - 1;
+
+    const yearlyData = Array(13).fill(0); // Changed array length to accommodate data from the current month of the preceding year
 
     for (const user of allUsers) {
       const userMissions = [...user.missions];
@@ -671,10 +674,10 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
           const endMonth = endDate.getMonth();
           const tjm = mission.missionInfo.dailyRate || 0;
 
-          // Include the last month of the previous year
-          if ((startYear === currentYear - 1 && startMonth === 11) || (startYear === currentYear || endYear === currentYear)) {
+          // Include the current month of the preceding year
+          if ((startYear === currentYearMinusOne && startMonth >= currentMonth) || (startYear === currentYear || endYear === currentYearMinusOne)) {
             for (let i = startMonth; i <= endMonth; i++) {
-              const yearIndex = startYear === currentYear - 1 && startMonth === 11 ? 0 : i + 1;
+              const yearIndex = startYear === currentYearMinusOne ? i - currentMonth : i + 1;
               yearlyData[yearIndex] += tjm * 20;
             }
           }
@@ -682,10 +685,9 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
       });
     }
 
-    const lastMonthOfPreviousYear = `${12}/${currentYear - 1}`;
+    const currentMonthOfPrecedingYear = `${currentMonth + 1}/${currentYearMinusOne}`;
     const categories = Array.from({ length: 13 }, (_, i) => {
-      const month = i === 0 ? lastMonthOfPreviousYear : `${i}/${currentYear}`;
-      return month;
+      return i === 0 ? currentMonthOfPrecedingYear : `${i + 1}/${currentYear}`;
     });
 
     const stats = {
@@ -699,6 +701,9 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
+
+
 
 exports.getConsultantStats = async (req, res) => {
   try {

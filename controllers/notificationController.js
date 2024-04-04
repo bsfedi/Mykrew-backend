@@ -58,7 +58,7 @@ exports.getRhNotifications = async (req, res) => {
                     else {
                         const user = await User.findOne({ _id: notification.userId });
                         if (user) {
-                            notification['userId'] = `${user.personalInfo.firstName} ${user.personalInfo.lastName}`;
+                            notification['userId'] = `${user.personalInfo.lastName} ${user.personalInfo.firstName} `;
                         } else {
                             notification['userId'] = ''; // Replace with empty string if user not found
                         }
