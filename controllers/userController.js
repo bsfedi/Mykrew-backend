@@ -666,7 +666,12 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
       userMissions.forEach(mission => {
         const startDate = new Date(mission.missionInfo.startDate);
         const endDate = new Date(mission.missionInfo.endDate);
+        // Calculate the difference in milliseconds
+        // Calculate the difference in milliseconds
+        const differenceInTime = endDate.getTime() - startDate.getTime();
 
+        // Convert the difference to days
+        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
         if (startDate && endDate) {
           const startYear = startDate.getFullYear();
           const startMonth = startDate.getMonth();
@@ -678,7 +683,7 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
           if ((startYear === currentYearMinusOne && startMonth >= currentMonth) || (startYear === currentYear || endYear === currentYearMinusOne)) {
             for (let i = startMonth; i <= endMonth; i++) {
               const yearIndex = startYear === currentYearMinusOne ? i - currentMonth : i + 1;
-              yearlyData[yearIndex] += tjm * 20;
+              yearlyData[yearIndex] += tjm * differenceInDays + 2;
             }
           }
         }
@@ -687,7 +692,7 @@ exports.getMonthlyStatsForAllUsers = async (req, res) => {
 
     const currentMonthOfPrecedingYear = `${currentMonth + 1}/${currentYearMinusOne}`;
     const categories = Array.from({ length: 13 }, (_, i) => {
-      return i === 0 ? currentMonthOfPrecedingYear : `${i + 1}/${currentYear}`;
+      return i === 0 ? currentMonthOfPrecedingYear : `${i}/${currentYear}`;
     });
 
     const stats = {
@@ -717,7 +722,8 @@ exports.getConsultantStats = async (req, res) => {
 
     const today = new Date();
     const startOfYear = moment().startOf('year').toDate();
-
+    console.log(today)
+    console.log(startOfYear)
     users.forEach(user => {
       if (user.missions && user.missions.length > 0) {
 
@@ -731,15 +737,16 @@ exports.getConsultantStats = async (req, res) => {
             const tjm = mission.missionInfo.dailyRate;
             totalTJM += tjm;
 
-            if (startDate >= startOfYear) {
-              totalRevenue += tjm;
-            }
+
+
+
+            totalRevenue += tjm;
+
           }
         });
       }
     });
 
-    console.log(numberOfMissions)
     const averageTJM = numberOfConsultants > 0 ? totalTJM / numberOfMissions : 0;
 
     return res.status(200).json({
