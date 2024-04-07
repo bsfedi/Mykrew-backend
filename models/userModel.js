@@ -56,7 +56,8 @@ const userSchema = new mongoose.Schema({
         uploadDate: {
           type: Date,
           default: Date.now
-        }
+        },
+        client: String
       }],
       signature: String,
       noteGlobale: String

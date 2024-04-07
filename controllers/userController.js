@@ -10,7 +10,7 @@ const emailService = require('../services/emailService');
 
 const fs = require('fs').promises;
 const moment = require('moment');
-const { log } = require('console');
+const { log, Console } = require('console');
 
 
 exports.resetPassword = async (req, res) => {
@@ -1025,11 +1025,15 @@ exports.updatePassword = async (req, res) => {
 
 exports.addPDFtoUser = async (req, res) => {
   try {
+    const client = req.body.client;
     const missionId = req.params.missionId;
     const files = req.files;
     const craPdfFilename = files.craPdf ? files.craPdf[0].filename : null;
 
-    // Add the current date
+    console.log("Client:", client);
+    console.log("Mission ID:", missionId);
+    console.log("PDF Filename:", craPdfFilename);
+
     const currentDate = new Date();
 
     const updatedUser = await User.findOneAndUpdate(
@@ -1038,7 +1042,8 @@ exports.addPDFtoUser = async (req, res) => {
         $push: {
           "missions.$.craInformation.craPDF": {
             filename: craPdfFilename,
-            uploadDate: currentDate
+            uploadDate: currentDate,
+            client: client
           },
         },
       },
@@ -1059,6 +1064,8 @@ exports.addPDFtoUser = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+``
+
 
 
 exports.getAllCras = async (req, res) => {
