@@ -357,7 +357,7 @@ exports.consultantEdit = async (req, res) => {
     }
     const decoded = jwt.verify(token, serviceJWT.jwtSecret);
     const role = decoded.role
-
+    const userId = decoded.userId
     if (role !== "CONSULTANT") {
         return res.status(403).send({ error: "Unauthorized" })
     }
@@ -484,7 +484,20 @@ exports.consultantEdit = async (req, res) => {
 
 
 
+        const notification = new Notification({
+            userId: userId,
+            typeOfNotification: "UPDATEREREGISTER",
+            toWho: "RH",
+            preregisterId: registerId,
 
+        })
+        await notification.save().
+            then(notification => {
+                socketModule.getIO().emit("rhNotification", { notification: notification })
+            })
+            .catch(error => {
+                console.log(error)
+            })
 
 
         return res.json(updatedPreRegistration);

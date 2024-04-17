@@ -203,16 +203,27 @@ exports.getVirementsStatsByYear = async (req, res) => {
         if (!virementsStats || virementsStats.length === 0) {
             return res.status(200).json({ message: `Aucun virement trouvé pour l'année ${year}` });
         }
+
+        // Prepare categories and initialize data arrays
         const currentYear = new Date().getFullYear();
         const categories = Array.from({ length: 12 }, (_, i) => {
             const month = i + 1;
             return `${month}/${currentYear}`;
         });
+        const cooptationData = Array.from({ length: 12 }, () => 0);
+        const participationData = Array.from({ length: 12 }, () => 0);
+
+        // Fill in the actual data
+        virementsStats.forEach(stat => {
+            const monthIndex = stat._id - 1;
+            cooptationData[monthIndex] = stat.totalCooptation;
+            participationData[monthIndex] = stat.totalParticipation;
+        });
 
         return res.status(200).json({
             series: [
-                { name: 'Cooptation', data: virementsStats.map(stat => stat.totalCooptation) },
-                { name: 'Participation', data: virementsStats.map(stat => stat.totalParticipation) }
+                { name: 'Cooptation', data: cooptationData },
+                { name: 'Participation', data: participationData }
             ],
             categories: categories
         });
@@ -221,3 +232,4 @@ exports.getVirementsStatsByYear = async (req, res) => {
         return res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 };
+
