@@ -281,6 +281,7 @@ exports.getMissionsByUserId = async (req, res) => {
         endDate: mission.missionInfo.endDate,
         isSimulationValidated: mission.missionInfo.isSimulationValidated,
       },
+      missionKilled: mission.missionKilled,
       clientInfo: {
         company: mission.clientInfo.company,
         firstName: mission.clientInfo.clientContact.firstName,
@@ -307,6 +308,7 @@ exports.getMissionsByUserId = async (req, res) => {
         endDate: mission.missionInfo.endDate.value,
         isSimulationValidated: mission.missionInfo.isSimulationValidated.value,
       },
+      missionKilled: mission.missionKilled,
       clientInfo: {
         company: mission.clientInfo.company,
         firstName: mission.clientInfo.clientContact.firstName.value,

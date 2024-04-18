@@ -235,11 +235,20 @@ exports.RHvalidation = async (req, res) => {
             return res.status(404).send("mission not found")
         } else {
             if (isFalseValuePresent) {
+
+
+                // Find the mission by its ID
+                const mission = await NewMission.findById(missionId);
+
+                const userId = mission.userId;
+                // If mission is found, return it in the response
+
+
                 const notification = new Notification({
-                    userId: newMission.userId,
+                    userId: userId,
                     typeOfNotification: "MISSIONNOTVALID",
                     toWho: "CONSULTANT",
-                    missionId: newMission._id,
+                    missionId: missionId,
 
                 })
                 await notification.save().then(notification => {
@@ -248,11 +257,18 @@ exports.RHvalidation = async (req, res) => {
 
 
             } else {
+                // Find the mission by its ID
+                const mission = await NewMission.findById(missionId);
+
+                const userId = mission.userId;
+                // If mission is found, return it in the response
+
+
                 const notification = new Notification({
-                    userId: newMission.userId,
+                    userId: userId,
                     typeOfNotification: "MISSIONVALID",
                     toWho: "CONSULTANT",
-                    missionId: newMission._id,
+                    missionId: missionId,
 
                 })
                 await notification.save().then(notification => {
