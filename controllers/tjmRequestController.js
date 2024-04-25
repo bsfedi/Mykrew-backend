@@ -137,7 +137,7 @@ exports.getMyTjmRequest = async (req, res) => {
 
 exports.getAllTjmRequest = async (req, res) => {
     try {
-        const requests = await TjmRequest.find({ status: "PENDING" });
+        const requests = await TjmRequest.find({ status: "PENDING" }).sort({ createdAt: -1 });
 
         if (requests.length > 0) {
 
