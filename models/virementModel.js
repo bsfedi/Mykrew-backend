@@ -1,17 +1,20 @@
 const mongoose = require('mongoose');
 mongoose.set("strictQuery", false);
 
-const type = ['Participation','Cooptation','Frais'];
+const type = ['Participation', 'Cooptation', 'Frais'];
 
 const virementSchema = new mongoose.Schema({
     userId: {
+        type: String,
+    },
+    rhId: {
         type: String,
     },
     typeVirement: {
         type: String,
         enum: type,
     },
-    montant:{
+    montant: {
         type: Number,
     },
     createdAt: {

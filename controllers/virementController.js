@@ -2,12 +2,13 @@ const Virement = require('../models/virementModel')
 const moment = require('moment');
 const socketModule = require('../configuration/socketConfig');
 const Notification = require("../models/notificationModel");
-
+const User = require('../models/userModel');
 exports.createVirement = async (req, res) => {
 
     const virementInfo = req.body
 
     const virement = new Virement({
+        rhId: virementInfo.rhId,
         userId: virementInfo.userId,
         typeVirement: virementInfo.typeVirement,
         montant: virementInfo.montant
@@ -74,19 +75,32 @@ exports.getVirementsByUserId = async (req, res) => {
     const userId = req.params.userId;
 
     try {
+        const user = await User.findOne({ _id: userId });
+
+        if (!user) {
+            return res.status(404).json({ message: `Utilisateur avec l'ID ${userId} non trouvé` });
+        }
+
         const virements = await Virement.find({ userId: userId });
 
         if (!virements || virements.length === 0) {
             return res.status(200).json({ message: `Aucun virement trouvé pour l'utilisateur avec l'ID ${userId}` });
         }
 
-        return res.status(200).json(virements);
+        // Update each virement object with the user's first name
+        const virementsWithFirstName = virements.map(virement => {
+            return {
+                ...virement.toObject(), // Convert Mongoose object to plain JavaScript object
+                rhId: user.personalInfo.firstName + ' ' + user.personalInfo.lastName // Update rhId with user's first name
+            };
+        });
+
+        return res.status(200).json(virementsWithFirstName);
     } catch (error) {
         console.error(`Erreur lors de la récupération des virements pour l'utilisateur avec l'ID ${userId} :`, error);
         return res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 };
-
 
 
 exports.getVirementsByPeriode = async (req, res) => {
