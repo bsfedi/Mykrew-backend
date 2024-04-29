@@ -71,11 +71,12 @@ exports.getAllVirements = async (req, res) => {
     }
 };
 
+
 exports.getVirementsByUserId = async (req, res) => {
     const userId = req.params.userId;
 
     try {
-        const user = await User.findOne({ _id: userId });
+        const user = await User.findById(userId); // Fetch user by ID
 
         if (!user) {
             return res.status(404).json({ message: `Utilisateur avec l'ID ${userId} non trouvé` });
@@ -88,12 +89,18 @@ exports.getVirementsByUserId = async (req, res) => {
         }
 
         // Update each virement object with the user's first name
-        const virementsWithFirstName = virements.map(virement => {
-            return {
-                ...virement.toObject(), // Convert Mongoose object to plain JavaScript object
-                rhId: user.personalInfo.firstName + ' ' + user.personalInfo.lastName // Update rhId with user's first name
-            };
-        });
+        const virementsWithFirstName = await Promise.all(virements.map(async virement => {
+            if (virement.rhId != "") {
+                const user = await User.findOne({ _id: virement.rhId });
+                console.log("user", user)
+                return {
+                    ...virement.toObject(), // Convert Mongoose object to plain JavaScript object
+                    rhId: user.personalInfo.firstName + ' ' + user.personalInfo.lastName // Update rhId with user's first name
+                };
+            }
+
+
+        }));
 
         return res.status(200).json(virementsWithFirstName);
     } catch (error) {
