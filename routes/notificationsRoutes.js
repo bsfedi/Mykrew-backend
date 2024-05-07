@@ -5,6 +5,7 @@ const { getAllMyNotificationsConsultant,
     getRhNotifications,
     markNotificationAsSeen,
     getRhNotificationsnotseen,
+    deleteNotifications,
     getMy5LastvirementsNotification } = require('../controllers/notificationController');
 
 
@@ -14,6 +15,6 @@ router.get('/getMy5LastvirementsNotification/:userId', getMy5LastvirementsNotifi
 router.get('/getRhNotification/', getRhNotifications);
 router.get('/markNotificationAsSeen/:notificationId', markNotificationAsSeen);
 router.get('/getRhNotificationsnotseen', getRhNotificationsnotseen)
-
+router.post('/deleteNotifications', deleteNotifications)
 module.exports = router;
 

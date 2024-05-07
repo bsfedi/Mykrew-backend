@@ -108,6 +108,19 @@ exports.getRhNotificationsnotseen = async (req, res) => {
     }
 };
 
+exports.deleteNotifications = async (req, res) => {
+    const notificationIds = req.body; // Assuming req.body contains an array of notification IDs to delete
+    try {
+        // Assuming Notification is your Mongoose model
+        await Notification.deleteMany({ _id: { $in: notificationIds } });
+        return res.status(200).send({ message: "Notifications deleted successfully." });
+    } catch (error) {
+        console.error("Error deleting notifications:", error);
+        return res.status(500).send({ error: "An error occurred while deleting notifications." });
+    }
+}
+
+
 exports.markNotificationAsSeen = async (req, res) => {
     const notificationId = req.params.notificationId;
 
