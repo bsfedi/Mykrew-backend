@@ -23,6 +23,7 @@ services:
       - "3600:3600"
     depends_on:
       - db
+    restart: unless-stopped  # Ensure this line is added
   db:
     image: mongo:latest
     hostname: mongo
@@ -30,5 +31,7 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    restart: unless-stopped  # Ensure this line is added
 volumes:
   mongo-data:
+
