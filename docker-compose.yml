@@ -1,24 +1,15 @@
-version: "3.8"
+version: "3.2"
 services:
-  app:
-    container_name: mykrew-backend
-    image: mykrew-backend:latest
-    restart: always
+  express-app:
+    build: .
     ports:
       - "3600:3600"
-    links:
-      - database
-
-  database:
-    container_name: mykrew-mongo
+    depends_on:
+      - db
+  db:
     image: mongo:latest
-    hostname: mykrew-mongo
-    restart: always
-    environment:
-      - MONGO_INITDB_DATABASE=app_db
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=root
+    hostname: mongo
     ports:
       - "27017:27017"
     volumes:
-      - /opt/data:/data/db
+      - ./data:/data/db
