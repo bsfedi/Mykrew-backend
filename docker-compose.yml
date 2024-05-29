@@ -25,9 +25,9 @@ services:
       - db
   db:
     image: mongo:latest
-    hostname: test_mongodb
+    hostname: mongo
     environment:
-      - MONGO_INITDB_DATABASE=app_db
+      - MONGO_INITDB_DATABASE=myKrew
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=root
     container_name: db
