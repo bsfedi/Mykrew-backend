@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 3600
 
 # Modify environment variables
-RUN sed -i "s|MONGO_URI=.*|MONGO_URI=mongodb://root:root@127.0.0.1:27017/myKrew|g" .env
+RUN sed -i "s|MONGO_URI=.*|MONGO_URI=mongodb://root:root@152.228.135.170:27017/myKrew?authSource=admin|g" .env
 
 
 # Rebuild bcrypt
