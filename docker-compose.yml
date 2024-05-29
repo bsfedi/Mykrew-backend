@@ -23,15 +23,19 @@ services:
       - "3600:3600"
     depends_on:
       - db
-    restart: unless-stopped  # Ensure this line is added
+    restart: unless-stopped
   db:
     image: mongo:latest
     hostname: mongo
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
     volumes:
       - mongo-data:/data/db
-    restart: unless-stopped  # Ensure this line is added
+    restart: unless-stopped
 volumes:
   mongo-data:
+
 
